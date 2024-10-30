@@ -16,7 +16,7 @@ maco = "1.1.8"
 yara-python = "4.5.1"
 dnfile = "0.15.1"
 dncil = "1.0.2"
-"rat_king_parser @ git+https://github.com/jeFF0Falltrades/rat_king_parser",
+rat_king_parser = {git = "https://github.com/jeFF0Falltrades/rat_king_parser", rev = "9c630583db4ec8bb8a817e4e2a2cbf19af76b7ca"}
 
 [tool.poetry.extras]
 maco = ["maco"]
