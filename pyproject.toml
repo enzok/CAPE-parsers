@@ -6,6 +6,7 @@ authors = ["Kevin O'Reilly <kev@capesandbox.com>", "doomedraven <doomedraven@cap
 license = "MIT"
 
 [tool.poetry.dependencies]
+python = ">=3.10, <4.0"
 pefile = "*"
 tldextract = "3.5.0"
 capstone = "4.0.2"
