@@ -1,6 +1,6 @@
 from maco.extractor import Extractor
 from maco.model import ExtractorModel as MACOModel
-from modules.processing.parsers.CAPE.DoppelPaymer import extract_config, rule_source
+from parsers.CAPE.DoppelPaymer import extract_config, rule_source
 
 
 def convert_to_MACO(raw_config: dict):

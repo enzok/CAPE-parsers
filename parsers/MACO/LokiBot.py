@@ -2,7 +2,7 @@ import os
 
 from maco.extractor import Extractor
 from maco.model import ExtractorModel as MACOModel
-from modules.processing.parsers.CAPE.LokiBot import extract_config
+from parsers.CAPE.LokiBot import extract_config
 
 
 def convert_to_MACO(raw_config: dict):
