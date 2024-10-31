@@ -10,7 +10,7 @@ from types import ModuleType
 from typing import Dict, Tuple
 
 PARSERS_ROOT = Path(__file__).absolute().parent
-
+log = logging.getLogger()
 
 def load_cape_parsers(load: str="all", exclude_parsers: list = []):
     """
@@ -107,6 +107,23 @@ def load_malduck_parsers():
         return {}
     return malduck_modules
 """
+
+def load_malwareconfig_parsers() -> Tuple[bool, dict, ModuleType]:
+    try:
+        from malwareconfig import fileparser
+        from malwareconfig.modules import __decoders__
+
+        ratdecoders_local_modules = load_ratdecoders_parsers()
+        if ratdecoders_local_modules:
+            __decoders__.update(ratdecoders_local_modules)
+        if "TestRats" not in __decoders__:
+            return False, False, False
+        return True, __decoders__, fileparser
+    except ImportError:
+        log.info("Missed RATDecoders -> poetry run pip install malwareconfig")
+    except Exception as e:
+        log.error(e, exc_info=True)
+    return False, False, False
 
 def load_ratdecoders_parsers():
     dec_modules = {}
