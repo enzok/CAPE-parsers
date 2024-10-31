@@ -1,6 +1,9 @@
 from contextlib import suppress
 
-from utils.strings import extract_strings
+try:
+    from parsers.utils.strings import extract_strings
+except ImportError as e:
+    print(f"Problem to import extract_strings: {e}")
 
 
 def extract_config(data):

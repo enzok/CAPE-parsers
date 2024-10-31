@@ -5,6 +5,8 @@
 DESCRIPTION = "Qakbot configuration parser."
 AUTHOR = "threathive, r1n9w0rm"
 
+import os
+import sys
 import datetime
 import hashlib
 import ipaddress
@@ -19,10 +21,14 @@ from Cryptodome.Hash import SHA256
 from Cryptodome.Util.Padding import unpad
 
 import yara
+from pathlib import Path
+# sys.path.insert(0, (Path(__file__).parent.parent / "../utils"))
+print(sys.path)
+
 
 try:
     HAVE_BLZPACK = True
-    from lib.cuckoo.common import blzpack
+    from parsers.utils.common import blzpack
 except OSError as e:
     print(f"Problem to import blzpack: {e}")
     HAVE_BLZPACK = False

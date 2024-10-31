@@ -17,7 +17,7 @@ from struct import pack, unpack
 import pefile
 
 import yara
-from utils.lznt1 import lznt1
+from parsers.utils.lznt1 import lznt1
 
 log = logging.getLogger(__name__)
 
