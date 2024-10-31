@@ -38,7 +38,7 @@ def load_cape_parsers(load: str="all", exclude_parsers: list = []):
                 # For example, a cape_type of "Emotet Payload" would trigger a config parser named "Emotet.py".
                 if name in exclude_parsers:
                     continue
-                cape_parsers[name.replace("_", " ")] = importlib.import_module(f"parsers.CAPE.{versions[version]}.{name}")
+                cape_parsers[name.replace("_", " ")] = importlib.import_module(f"cape_parsers.CAPE.{versions[version]}.{name}")
                 # PARSERS_TAGS[name.replace("_", " ")] = versions[version]
             except (ImportError, IndexError, AttributeError) as e:
                 print(f"CAPE parser: No module named {name} - {e}")
@@ -74,7 +74,7 @@ def _malduck_load_decoders():
 
     for name in decoders:
         try:
-            malduck_modules[name] = importlib.import_module(f"parsers.malduck.{name}")
+            malduck_modules[name] = importlib.import_module(f"cape_parsers.malduck.{name}")
         except (ImportError, IndexError) as e:
             print(f"malduck parser: No module named {name} - {e}")
 
@@ -137,7 +137,7 @@ def load_ratdecoders_parsers():
         return dec_modules
 
     # Walk recursively through all modules and packages.
-    for loader, module_name, ispkg in pkgutil.walk_packages("parsers.RATDecoders."):
+    for loader, module_name, ispkg in pkgutil.walk_packages("cape_parsers.RATDecoders."):
         # If current item is a package, skip.
         if ispkg:
             continue

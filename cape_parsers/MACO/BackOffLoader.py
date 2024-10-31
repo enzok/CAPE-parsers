@@ -1,6 +1,6 @@
 from maco.extractor import Extractor
 from maco.model import ExtractorModel as MACOModel
-from parsers.CAPE.BackOffLoader import extract_config
+from cape_parsers.CAPE.BackOffLoader import extract_config
 
 
 def convert_to_MACO(raw_config: dict):

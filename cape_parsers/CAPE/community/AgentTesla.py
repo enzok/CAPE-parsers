@@ -1,7 +1,7 @@
 from contextlib import suppress
 
 try:
-    from parsers.utils.strings import extract_strings
+    from cape_parsers.utils.strings import extract_strings
 except ImportError as e:
     print(f"Problem to import extract_strings: {e}")
 

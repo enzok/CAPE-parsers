@@ -6,8 +6,8 @@ import logging
 import re
 from contextlib import suppress
 
-from parsers.utils.dotnet_utils import dotnet_user_strings
-from parsers.utils.strings import extract_strings
+from cape_parsers.utils.dotnet_utils import dotnet_user_strings
+from cape_parsers.utils.strings import extract_strings
 
 try:
     import dnfile

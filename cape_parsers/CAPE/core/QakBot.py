@@ -23,7 +23,7 @@ import yara
 
 try:
     HAVE_BLZPACK = True
-    from parsers.utils import blzpack
+    from cape_parsers.utils import blzpack
 except OSError as e:
     print(f"Problem to import blzpack: {e}")
     HAVE_BLZPACK = False
