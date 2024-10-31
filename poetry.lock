@@ -1276,8 +1276,8 @@ maco = ["maco", "validators"]
 [package.source]
 type = "git"
 url = "https://github.com/jeFF0Falltrades/rat_king_parser"
-reference = "9c630583db4ec8bb8a817e4e2a2cbf19af76b7ca"
-resolved_reference = "9c630583db4ec8bb8a817e4e2a2cbf19af76b7ca"
+reference = "ab849ec8face38c8dac3f803ae5fe7cf8be26583"
+resolved_reference = "ab849ec8face38c8dac3f803ae5fe7cf8be26583"
 
 [[package]]
 name = "regex"
@@ -1595,4 +1595,4 @@ maco = ["maco"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <4.0"
-content-hash = "c769c7bd835cc3b830bd74cb19facd30655d093c8f0fc78e2e651504731d3d11"
+content-hash = "45a2bf6a5a0e8d593481a1195aa9a7a60de602a9ab39e93d57803a374d601fe9"
