@@ -16,6 +16,7 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
+
 def bytes2str(convert):
     """Converts bytes to string
     @param convert: string as bytes.

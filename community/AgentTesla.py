@@ -2,6 +2,7 @@ from contextlib import suppress
 
 from utils.strings import extract_strings
 
+
 def extract_config(data):
     config_dict = {}
     with suppress(Exception):
