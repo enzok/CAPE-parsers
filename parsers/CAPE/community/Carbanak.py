@@ -32,7 +32,7 @@ rule Carbanak
         description = "Carbanak sbox constants"
         cape_type = "Carbanak Payload"
     strings:
-        $constants = {0F B7 05 [3] 00 0F B7 1D [3] 00 83 25 [3] 00 00 89 05 [3] 00 0F B7 05 [3] 00 89 1D [3] 00 89 05 [3] 00 33 C0 4? 8D 4D}    
+        $constants = {0F B7 05 [3] 00 0F B7 1D [3] 00 83 25 [3] 00 00 89 05 [3] 00 0F B7 05 [3] 00 89 1D [3] 00 89 05 [3] 00 33 C0 4? 8D 4D}
     condition:
         all of them
 }
@@ -156,7 +156,7 @@ def extract_config(filebuf):
             with suppress(IndexError, UnicodeDecodeError, ValueError):
                 dec = decode_string(item, sbox).decode("utf8")
                 if dec:
-                    ver = re.findall("^(\d+\.\d+)$", dec)
+                    ver = re.findall(r"^(\d+\.\d+)$", dec)
                     if ver:
                         cfg["Version"] = ver[0]
 
