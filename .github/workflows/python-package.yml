@@ -3,11 +3,7 @@ name: Python package
 env:
   COLUMNS: 132
 
-on:
-  push:
-    branches: [ master, staging ]
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
+on: push
 
 jobs:
   test:
