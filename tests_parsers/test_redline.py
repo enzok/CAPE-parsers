@@ -2,7 +2,7 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file "docs/LICENSE" for copying permission.
 
-from cape_parsers.CAPE.community.RedLine import extract_config
+from cape_parsers.CAPE.core.RedLine import extract_config
 
 
 

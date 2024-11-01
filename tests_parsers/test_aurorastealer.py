@@ -1,4 +1,4 @@
-from modules.processing.parsers.CAPE.community.AuroraStealer import extract_config
+from cape_parsers.CAPE.community.AuroraStealer import extract_config
 
 def test_aurorastealer():
     with open("tests/data/malware/8da8821d410b94a2811ce7ae80e901d7e150ad3420d677b158e45324a6606ac4", "rb") as data:
