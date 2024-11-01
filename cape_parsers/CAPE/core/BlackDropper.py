@@ -53,7 +53,7 @@ def extract_config(data: bytes) -> dict:
         return {}
 
     rdata_data = rdata_section.get_data()
-    patterns = [b"Builder\.dll\x00", b"Builder\.exe\x00"]
+    patterns = [br"Builder\.dll\x00", br"Builder\.exe\x00"]
     matches = []
     for pattern in patterns:
         matches.extend(re.finditer(pattern, rdata_data))
