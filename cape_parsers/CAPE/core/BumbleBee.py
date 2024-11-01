@@ -6,7 +6,8 @@ import traceback
 from contextlib import suppress
 
 import pefile
-import regex as re
+# import regex as re
+import re
 from Cryptodome.Cipher import ARC4
 
 import yara
