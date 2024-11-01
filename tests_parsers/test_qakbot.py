@@ -1,5 +1,5 @@
 import pytest
-from modules.processing.parsers.CAPE.QakBot import extract_config
+from cape_parsers.CAPE.core.QakBot import extract_config
 
 
 @pytest.mark.skip(reason="Missed file")

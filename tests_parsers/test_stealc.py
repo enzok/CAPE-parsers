@@ -2,7 +2,7 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-from modules.processing.parsers.CAPE.Stealc import extract_config
+from cape_parsers.CAPE.community.Stealc import extract_config
 
 
 def test_stealc():

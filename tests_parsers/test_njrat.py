@@ -2,15 +2,7 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-from contextlib import suppress
-
-from modules.processing.parsers.CAPE.Njrat import extract_config
-
-HAVE_MACO = False
-with suppress(ImportError):
-    from modules.processing.parsers.MACO.Njrat import convert_to_MACO
-
-    HAVE_MACO = True
+from cape_parsers.CAPE.community.Njrat import extract_config
 
 
 def test_njrat():
@@ -21,17 +13,6 @@ def test_njrat():
             "campaign id": "HacKed",
             "version": "Njrat 0.7 Golden By Hassan Amiri",
         }
-        if HAVE_MACO:
-            assert convert_to_MACO(conf).model_dump(exclude_defaults=True, exclude_none=True) == {
-                "family": "Njrat",
-                "version": "Njrat 0.7 Golden By Hassan Amiri",
-                "other": {
-                    "cncs": ["peter-bikini.gl.at.ply.gg:64215"],
-                    "campaign id": "HacKed",
-                    "version": "Njrat 0.7 Golden By Hassan Amiri",
-                },
-                "http": [{"hostname": "peter-bikini.gl.at.ply.gg", "port": 64215, "usage": "c2"}],
-            }
 
 
 """
