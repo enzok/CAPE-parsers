@@ -57,7 +57,7 @@ def load_mwcp_parsers() -> Tuple[Dict[str, str], ModuleType]:
         HAVE_MWCP = True
 
     if not HAVE_MWCP:
-        return {}
+        return {}, False
 
     logging.getLogger("mwcp").setLevel(logging.CRITICAL)
     mwcp.register_parser_directory(os.path.join(PARSERS_ROOT, "mwcp"))
