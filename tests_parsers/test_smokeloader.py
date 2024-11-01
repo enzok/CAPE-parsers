@@ -1,4 +1,4 @@
-from cape_parsers.CAPE.community.core.SmokeLoader import extract_config
+from cape_parsers.CAPE.core.SmokeLoader import extract_config
 
 
 def test_smokeloader():
