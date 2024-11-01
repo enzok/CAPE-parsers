@@ -41,7 +41,6 @@ pytest = "7.2.2"
 pytest-pretty = "1.1.0"
 pytest-cov = "3.0.0"
 pytest-mock = "3.7.0"
-pytest-django = "4.5.2"
 pytest_asyncio = "0.18.3"
 pytest-xdist = "3.6.1"
 pytest-asyncio = "0.18.3"
@@ -71,10 +70,8 @@ max-line-length = 132
 exclude = ".git,__pycache__,.cache,.venv"
 
 [tool.pytest.ini_options]
-django_find_project = false
-DJANGO_SETTINGS_MODULE = "web.settings"
-pythonpath = [".", "web"]
-testpaths = ["tests", "agent"]
+pythonpath = ["."]
+testpaths = ["tests"]
 norecursedirs = "tests/zip_compound"
 
 [build-system]
