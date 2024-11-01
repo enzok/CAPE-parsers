@@ -3,11 +3,7 @@ name: Python package
 env:
   COLUMNS: 132
 
-on:
-  push:
-    branches: [ master, staging ]
-  pull_request:
-    types: [opened, synchronize, reopened, closed]
+on: push
 
 jobs:
   test:
@@ -33,7 +29,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run Ruff
-        run: poetry run ruff . --line-length 132 --ignore E501,E402
+        run: poetry run ruff check . --line-length 132 --ignore E501,E402
 
       - name: See if any parser changed
         uses: dorny/paths-filter@v3
@@ -41,8 +37,8 @@ jobs:
         with:
           filters: |
             src:
-              - 'core/*.py'
-              - 'community/**.py'
+              - 'cape_parsers/CAPE/core/*.py'
+              - 'cape_parsers/CAPE/community/**.py'
 
       - name: Test parsers only if any parser changed
         if: steps.changes.outputs.src == 'true'

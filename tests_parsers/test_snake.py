@@ -2,7 +2,7 @@
 # This file is part of Cuckoo Sandbox - http://www.cuckoosandbox.org
 # See the file 'docs/LICENSE' for copying permission.
 
-from modules.processing.parsers.CAPE.Snake import extract_config
+from cape_parsers.CAPE.community.Snake import extract_config
 
 
 def test_snake():
