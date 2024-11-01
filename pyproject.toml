@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "CAPE-parsers"
-version = "0.1.2"
+version = "0.1.3"
 description = "CAPE: Malware Configuration Extraction"
 authors = ["Kevin O'Reilly <kev@capesandbox.com>", "doomedraven <doomedraven@capesandbox.com>"]
 license = "MIT"
@@ -16,8 +16,8 @@ python = ">=3.10, <4.0"
 pefile = "*"
 tldextract = "3.5.0"
 capstone = "4.0.2"
-pycryptodomex = "3.20.0"
-regex = "2021.7.6"
+pycryptodomex = ">=3.20.0"
+regex = "2024.9.11"
 netstruct = "1.1.2"
 maco = "1.1.8"
 yara-python = "4.5.1"
