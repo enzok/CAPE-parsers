@@ -52,8 +52,6 @@ func-timeout = "^4.3.5"
 pre-commit = "^2.19.0"
 
 [tool.ruff]
-select = ["E", "F"]
-ignore = ["E402","E501"]
 exclude = [
     "./analyzer/linux/dbus_next",
 ]
@@ -82,3 +80,7 @@ norecursedirs = "tests/zip_compound"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[lint]
+select = ["E", "F"]
+ignore = ["E402","E501"]
