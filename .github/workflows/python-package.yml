@@ -37,8 +37,8 @@ jobs:
         with:
           filters: |
             src:
-              - 'CAPE/core/*.py'
-              - 'CAPE/community/**.py'
+              - 'cape_parsers/CAPE/core/*.py'
+              - 'cape_parsers/CAPE/community/**.py'
 
       - name: Test parsers only if any parser changed
         if: steps.changes.outputs.src == 'true'
