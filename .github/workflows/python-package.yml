@@ -29,7 +29,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Run Ruff
-        run: poetry run ruff . --line-length 132 --ignore E501,E402
+        run: poetry run ruff check . --line-length 132 --ignore E501,E402
 
       - name: See if any parser changed
         uses: dorny/paths-filter@v3
