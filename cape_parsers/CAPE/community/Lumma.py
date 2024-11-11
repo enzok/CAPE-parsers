@@ -71,10 +71,14 @@ def extract_config(data):
     # try with newer version xor decoding
     if not config_dict["C2"]:
         try:
-            rdata = get_rdata(data)
-            strings = extract_strings(rdata, 44)
-            base64_strings = get_base64_strings(strings)
 
+            rdata = get_rdata(data)
+            if rdata is not None:
+                strings = extract_strings(rdata, 44)
+            else:
+                strings = extract_strings(data, 44)
+
+            base64_strings = get_base64_strings(strings)
             for base64_str in base64_strings:
                 try:
                     decoded_bytes = base64.b64decode(base64_str, validate=True)
