@@ -12,4 +12,5 @@ def test_quickbind():
             "Encryption Key": "24de21a8dc08434c",
             "Mutex": ["15432a4d-34ca-4d0d-a4ac-04df9a373862"],
             "C2": ["185.49.69.41"],
+            "User-agent": "Mozilla / 4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1;.NET CLR 1.0.3705)"
         }
