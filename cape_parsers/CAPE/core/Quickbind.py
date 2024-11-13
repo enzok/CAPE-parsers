@@ -23,44 +23,39 @@ def is_hex(hex_string):
 def extract_config(filebuf):
     cfg = {}
     pe = pefile.PE(data=filebuf)
-    skip = {
-        "data": 4,
-        "rdata": 1,
-    }
 
     section_data = {
         "data": "",
         "rdata": "",
     }
 
-    data_sections = [s for s in pe.sections if s.Name.find(b".data") != -1]
-    rdata_sections = [s for s in pe.sections if s.Name.find(b".rdata") != -1]
+    data_section = [s for s in pe.sections if s.Name.find(b".data") != -1][0]
+    rdata_section = [s for s in pe.sections if s.Name.find(b".rdata") != -1][0]
 
-    if data_sections:
-        section_data["data"] = data_sections[0].get_data()
+    if data_section:
+        section_data["data"] = data_section.get_data()
 
-    if rdata_sections:
-        section_data["rdata"] = rdata_sections[0].get_data()
+    if rdata_section:
+        section_data["rdata"] = rdata_section.get_data()
 
     entries = []
-    
+
     for section in section_data:
         data = section_data[section]
         offset = 0
+
         while offset < len(data):
+            decrypted_result = ""
             if offset + 8 > len(data):
                 break
             size, key = struct.unpack_from("I4s", data, offset)
-            if b"\x00\x00\x00" in key or size > 256:
-                offset += skip[section]
+            if b"\x00\x00\x00" in key or size > 256 or size == 0:
+                offset += 1
                 continue
             offset += 8
             data_format = f"{size}s"
             encrypted_string = struct.unpack_from(data_format, data, offset)[0]
-            offset += size
-            padding = (8 - (offset % 8)) % 8
-            offset += padding
-    
+
             with suppress(IndexError, UnicodeDecodeError, ValueError):
                 decrypted_result = (
                     ARC4.new(key)
@@ -68,13 +63,31 @@ def extract_config(filebuf):
                     .replace(b"\x00", b"")
                     .decode("utf-8")
                 )
-                if decrypted_result and len(decrypted_result) > 1:
+
+            if decrypted_result and all(32 <= ord(char) <= 127 for char in decrypted_result):
+                if len(decrypted_result) > 2:
                     entries.append(decrypted_result)
+                offset += size
+                pad_start = offset
+                pad_end = pad_start
+                while pad_end < len(data) and data[pad_end] == 0:
+                    pad_end += 1
+                padding = pad_end - pad_start
+                offset += padding
+            else:
+                offset += 1
 
     if entries:
         c2s = []
         mutexes = []
-        known_campaigns = ("capo", "aws", "bing1", "bing2", "bing3")
+        known_campaigns = (
+            "capo",
+            "aws",
+            "bing1",
+            "bing2",
+            "bing3",
+            "adobe.com"
+        )
 
         for item in entries:
             if item.count(".") == 3 and re.fullmatch(r"\d+", item.replace(".", "")):
@@ -83,7 +96,7 @@ def extract_config(filebuf):
             elif "http" in item:
                 c2s.append(item)
 
-            elif item.count("-") == 4:
+            elif item.count("-") == 4 and "{" not in item:
                 mutexes.append(item)
 
             elif is_hex(item):
