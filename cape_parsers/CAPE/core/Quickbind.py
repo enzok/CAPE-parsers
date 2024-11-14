@@ -100,7 +100,7 @@ def extract_config(filebuf):
                 mutexes.append(item)
 
             elif is_hex(item):
-                cfg["Encryption Key"] = item
+                cfg["RC4 Key"] = item
 
             elif "Mozilla" in item:
                 cfg["User-agent"] = item
