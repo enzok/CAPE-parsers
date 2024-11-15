@@ -105,7 +105,7 @@ def extract_config(data):
                 elif decoded_str.startswith("/") and decoded_str[-4] == ".":
                     uri = decoded_str
                 #else:
-                #    config_dict["Strings"].append({f"dword_{dword_name}" : decoded_str})
+                #    config_dict["Strings"].append({dword_name : decoded_str})
 
             if domain and uri:
                 config_dict.setdefault("C2", []).append(f"{domain}{uri}")
