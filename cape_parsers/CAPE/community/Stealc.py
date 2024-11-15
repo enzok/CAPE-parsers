@@ -4,7 +4,7 @@ import yara
 from contextlib import suppress
 
 
-# Hashes: 619751f5ed0a9716318092998f2e4561f27f7f429fe6103406ecf16e33837470
+# Hash = 619751f5ed0a9716318092998f2e4561f27f7f429fe6103406ecf16e33837470
 
 RULE_SOURCE = """rule StealC
 {
@@ -70,7 +70,7 @@ def extract_config(data):
     # Try with new method
     if not config_dict.get("C2"):
         with suppress(Exception):
-            # config_dict["Strings"] = []
+            #config_dict["Strings"] = []
             pe = pefile.PE(data=data, fast_load=False)
             image_base = pe.OPTIONAL_HEADER.ImageBase
             domain = ""
@@ -78,23 +78,23 @@ def extract_config(data):
             for match in yara_scan(data):
                 rule_str_name, str_decode_offset = match
                 str_size = int(data[str_decode_offset + 1])
-                # Ensure it's not a dummy string
+                # Ignore size 0 strings
                 if not str_size:
                     continue
 
                 if rule_str_name == "$decode_1":
                     key_rva = data[str_decode_offset + 3 : str_decode_offset + 7]
                     encoded_str_rva = data[str_decode_offset + 8 : str_decode_offset + 12]
-                    dword_rva = data[str_decode_offset + 21 : str_decode_offset + 25]
+                    #dword_rva = data[str_decode_offset + 21 : str_decode_offset + 25]
                 elif rule_str_name == "$decode_2":
                     key_rva = data[str_decode_offset + 3 : str_decode_offset + 7]
                     encoded_str_rva = data[str_decode_offset + 8 : str_decode_offset + 12]
-                    dword_rva = data[str_decode_offset + 30 : str_decode_offset + 34]
+                    #dword_rva = data[str_decode_offset + 30 : str_decode_offset + 34]
 
                 key_offset = pe.get_offset_from_rva(struct.unpack("i", key_rva)[0] - image_base)
                 encoded_str_offset = pe.get_offset_from_rva(struct.unpack("i", encoded_str_rva)[0] - image_base)
-                dword_offset = struct.unpack("i", dword_rva)[0]
-                dword_name = f"dword_{hex(dword_offset)[2:]}"
+                #dword_offset = struct.unpack("i", dword_rva)[0]
+                #dword_name = f"dword_{hex(dword_offset)[2:]}"
 
                 key = data[key_offset : key_offset + str_size]
                 encoded_str = data[encoded_str_offset : encoded_str_offset + str_size]
@@ -104,6 +104,8 @@ def extract_config(data):
                     domain = decoded_str
                 elif decoded_str.startswith("/") and decoded_str[-4] == ".":
                     uri = decoded_str
+                #else:
+                #    config_dict["Strings"].append({f"dword_{dword_name}" : decoded_str})
 
             if domain and uri:
                 config_dict.setdefault("C2", []).append(f"{domain}{uri}")
