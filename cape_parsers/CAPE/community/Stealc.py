@@ -13,17 +13,10 @@ RULE_SOURCE = """rule StealC
     strings:
         $decode_1 = {
             6A ??
-            68 ?? ?? ?? ??
-            68 ?? ?? ?? ??
-            E8 ?? ?? ?? ??
-            83 C4 0C
-            A3 ?? ?? ?? ??
-        }
-        $decode_2 = {
-            6A ??
-            68 ?? ?? ?? ??
-            68 ?? ?? ?? ??
-            [0-5]
+            (
+                68 ?? ?? ?? ?? 68 ?? ?? ?? ?? [0-5]
+                68 ?? ?? ?? ?? 68 ?? ?? ?? ??
+            )
             E8 ?? ?? ?? ??
         }
 
@@ -86,10 +79,6 @@ def extract_config(data):
                     key_rva = data[str_decode_offset + 3 : str_decode_offset + 7]
                     encoded_str_rva = data[str_decode_offset + 8 : str_decode_offset + 12]
                     #dword_rva = data[str_decode_offset + 21 : str_decode_offset + 25]
-                elif rule_str_name == "$decode_2":
-                    key_rva = data[str_decode_offset + 3 : str_decode_offset + 7]
-                    encoded_str_rva = data[str_decode_offset + 8 : str_decode_offset + 12]
-                    #dword_rva = data[str_decode_offset + 30 : str_decode_offset + 34]
 
                 key_offset = pe.get_offset_from_rva(struct.unpack("i", key_rva)[0] - image_base)
                 encoded_str_offset = pe.get_offset_from_rva(struct.unpack("i", encoded_str_rva)[0] - image_base)
@@ -99,7 +88,7 @@ def extract_config(data):
                 key = data[key_offset : key_offset + str_size]
                 encoded_str = data[encoded_str_offset : encoded_str_offset + str_size]
                 decoded_str = xor_data(encoded_str, key).decode()
-                
+
                 if "http" in decoded_str and "://" in decoded_str:
                     domain = decoded_str
                 elif decoded_str.startswith("/") and decoded_str[-4] == ".":
