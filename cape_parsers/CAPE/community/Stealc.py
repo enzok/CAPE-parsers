@@ -13,10 +13,17 @@ RULE_SOURCE = """rule StealC
     strings:
         $decode_1 = {
             6A ??
-            (
-                68 ?? ?? ?? ?? 68 ?? ?? ?? ?? [0-5]
-                68 ?? ?? ?? ?? 68 ?? ?? ?? ??
-            )
+            68 ?? ?? ?? ??
+            68 ?? ?? ?? ??
+            E8 ?? ?? ?? ??
+            83 C4 0C
+            A3 ?? ?? ?? ??
+        }
+        $decode_2 = {
+            6A ??
+            68 ?? ?? ?? ??
+            68 ?? ?? ?? ??
+            [0-5]
             E8 ?? ?? ?? ??
         }
 
@@ -75,7 +82,7 @@ def extract_config(data):
                 if not str_size:
                     continue
 
-                if rule_str_name == "$decode_1":
+                if rule_str_name.startswith("$decode"):
                     key_rva = data[str_decode_offset + 3 : str_decode_offset + 7]
                     encoded_str_rva = data[str_decode_offset + 8 : str_decode_offset + 12]
                     #dword_rva = data[str_decode_offset + 21 : str_decode_offset + 25]
