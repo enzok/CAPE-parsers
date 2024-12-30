@@ -16,7 +16,6 @@ packages = [{ include = "cape_parsers" }]
 python = ">=3.10, <4.0"
 pefile = "*"
 capstone = ">=4.0.2"
-cryptography = ">=44.0.0"
 pycryptodomex = ">=3.20.0"
 # regex = ">=2021.7.6"
 netstruct = "1.1.2"
