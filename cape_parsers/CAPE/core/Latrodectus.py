@@ -19,8 +19,10 @@ from contextlib import suppress
 
 import yara
 import pefile
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+from Cryptodome.Cipher import AES
+from Cryptodome.Cipher.AES import MODE_CBC, MODE_CTR
+
 
 log = logging.getLogger(__name__)
 
@@ -73,27 +75,17 @@ def yara_scan(raw_data):
     except Exception as e:
         print(e)
 
-
-def initialize_key_schedule(key: bytes, iv: bytes) -> Cipher:
-    backend = default_backend()
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=backend)
-    return cipher
-
-
-def decrypt_with_ctr(cbc_cipher: Cipher, iv: bytes, data: bytes) -> bytes:
+def decrypt_with_ctr(cbc_cipher, nonce: bytes, data: bytes) -> bytes:
     key = cbc_cipher.algorithm.key
-    backend = default_backend()
-    cipher = Cipher(algorithms.AES(key), modes.CTR(iv), backend=backend)
-    decryptor = cipher.decryptor()
-    plaintext = decryptor.update(data) + decryptor.finalize()
-    return plaintext
+    cipher = AES.new(key, mode=MODE_CTR, nonce=nonce)
+    return cipher.decrypt(data)
 
 
 def decrypt_string_aes(data: bytes, key: bytes) -> bytes:
     len_data = int.from_bytes(data[:2], "little")
     iv = data[2:18]
     data = data[18 : 18 + len_data]
-    cbc_cipher = initialize_key_schedule(key, iv)
+    cbc_cipher = AES.new(key, mode=MODE_CBC, iv=iv)
     decrypted_data = decrypt_with_ctr(cbc_cipher, iv, data)
     return decrypted_data
 
