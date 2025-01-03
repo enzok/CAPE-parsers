@@ -1,3 +1,4 @@
+import struct
 import base64
 import re
 import json
