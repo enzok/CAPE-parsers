@@ -85,7 +85,6 @@ def chacha20_stream(key, nonce, length, blocknum):
 def decrypt_config(data):
     decrypted_config = b"\x21\x52\x48\x59"
     data_len = len(data)
-    v4 = 4
     v3 = 0
     while True:
         v8 = 4
