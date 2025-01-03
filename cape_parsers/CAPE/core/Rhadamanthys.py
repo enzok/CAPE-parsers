@@ -167,7 +167,7 @@ def extract_config(data):
                     "C2": [c2_url]
                 }
                 return config_dict
-            except Exception as e:
+            except Exception:
                 continue
 
 
