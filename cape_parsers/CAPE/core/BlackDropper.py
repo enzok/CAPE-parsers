@@ -12,17 +12,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-import datetime
+from datetime import datetime
 import re
 from contextlib import suppress
 
 import pefile
 
 
-def get_current_year() -> str:
-    current_date = datetime.datetime.now()
-    return str(current_date.year)
+def get_year(pe: pefile.PE) -> str:
+    try:
+        pe_timestamp = pe.FILE_HEADER.TimeDateStamp
+    except AttributeError:
+        return ""
+    return datetime.fromtimestamp(pe_timestamp).strftime("%Y")
 
 
 def decrypt_string(encoded_string: str, key: str) -> str:
@@ -70,12 +72,14 @@ def extract_config(data: bytes) -> dict:
     campaign = ""
 
     if found_strings:
+        key = get_year(pe)
+        if not key:
+            return result
         for string in found_strings:
             with suppress(UnicodeDecodeError):
                 decoded_string = string.decode("utf-8").rstrip("\x00")
 
             if re.match(r"^[0-9A-Fa-f]+$", decoded_string):
-                key = get_current_year()
                 url = decrypt_string(decoded_string, key)
                 if url:
                     urls.append(url)
