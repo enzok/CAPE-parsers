@@ -19,5 +19,6 @@ def test_lumma():
                 "possiwreeste.site",
                 "famikyjdiag.site",
                 "agentyanlark.site",
-            ]
+            ],
+            'Build ID': 'z9sSW4--'
         }

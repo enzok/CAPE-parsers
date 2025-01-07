@@ -72,6 +72,7 @@ def extract_config(data):
             image_base = pe.OPTIONAL_HEADER.ImageBase
             domain = ""
             uri = ""
+            last_str = ""
             for match in yara_scan(data):
                 rule_str_name, str_decode_offset = match
                 str_size = int(data[str_decode_offset + 1])
@@ -92,16 +93,22 @@ def extract_config(data):
                 key = data[key_offset : key_offset + str_size]
                 encoded_str = data[encoded_str_offset : encoded_str_offset + str_size]
                 decoded_str = xor_data(encoded_str, key).decode()
+                #config_dict["Strings"].append({dword_name : decoded_str})
 
-                if "http" in decoded_str and "://" in decoded_str and decoded_str not in ("http://", "https://"):
+                if last_str in ("http://", "https://"):
+                    domain += decoded_str
+                elif decoded_str in ("http://", "https://"):
+                    domain = decoded_str
+                elif "http" in decoded_str and "://" in decoded_str:
                     domain = decoded_str
                 elif decoded_str.startswith("/") and decoded_str[-4] == ".":
                     uri = decoded_str
-                #else:
-                #    config_dict["Strings"].append({dword_name : decoded_str})
 
-            if domain and uri:
-                config_dict.setdefault("C2", []).append(f"{domain}{uri}")
+                last_str = decoded_str
+
+                if domain and uri:
+                    config_dict.setdefault("C2", []).append(f"{domain}{uri}")
+                    return config_dict
 
     return config_dict
 
