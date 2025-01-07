@@ -93,7 +93,7 @@ def extract_config(data):
                 encoded_str = data[encoded_str_offset : encoded_str_offset + str_size]
                 decoded_str = xor_data(encoded_str, key).decode()
 
-                if "http" in decoded_str and "://" in decoded_str:
+                if "http" in decoded_str and "://" in decoded_str and decoded_str not in ("http://", "https://"):
                     domain = decoded_str
                 elif decoded_str.startswith("/") and decoded_str[-4] == ".":
                     uri = decoded_str
