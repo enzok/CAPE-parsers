@@ -5,7 +5,7 @@
 from cape_parsers.CAPE.core.Rhadamanthys import extract_config
 
 
-def test_lumma():
+def test_rhadamanthys():
     with open("tests/data/malware/b70519d6094fa55da2b86d897be0040ee84d0b3ef61ab4fd8d08a20628a67497", "rb") as data:
         conf = extract_config(data.read())
         assert conf == {
