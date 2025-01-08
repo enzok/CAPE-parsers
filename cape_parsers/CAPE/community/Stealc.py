@@ -1,7 +1,6 @@
 import struct
 import pefile
 import yara
-from contextlib import suppress
 
 
 # Hash = 619751f5ed0a9716318092998f2e4561f27f7f429fe6103406ecf16e33837470
