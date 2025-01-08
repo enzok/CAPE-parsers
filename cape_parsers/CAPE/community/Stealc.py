@@ -1,7 +1,6 @@
 import struct
 import pefile
 import yara
-import json
 from contextlib import suppress
 
 
