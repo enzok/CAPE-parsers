@@ -88,6 +88,7 @@ def extract_config(filebuf):
             "bing3",
             "adobe.com",
             "traf",
+            "qwa2",
         )
 
         for item in entries:
