@@ -10,4 +10,5 @@ def test_stealc():
         conf = extract_config(data.read())
         assert conf == {
             "C2": ["http://95.217.125.57/2f571d994666c8cb.php"],
+            "Botnet ID": "5385386367"
         }

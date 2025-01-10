@@ -3,9 +3,9 @@ import pefile
 import yara
 
 
-# Hash = 619751f5ed0a9716318092998f2e4561f27f7f429fe6103406ecf16e33837470
+# Hash = 69ba4e2995d6b11bb319d7373d150560ea295c02773fe5aa9c729bfd2c334e1e
 
-RULE_SOURCE = """rule StealC
+RULE_SOURCE = """rule Arkei
 {
     meta:
         author = "Yung Binary"
@@ -104,8 +104,9 @@ def extract_config(data):
                 domain = decoded_str
             elif uri == "" and decoded_str.startswith("/") and decoded_str[-4] == ".":
                 uri = decoded_str
-            elif last_str[0] == '/' and last_str[-1] == '/':
+            elif last_str.startswith("/") and last_str[-4] == ".":
                 botnet_id = decoded_str
+                break
 
             last_str = decoded_str
 
