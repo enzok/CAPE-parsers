@@ -17,18 +17,16 @@ import logging
 import re
 from contextlib import suppress
 
-import yara
 import pefile
-
+import yara
 from Cryptodome.Cipher import AES
-from Cryptodome.Cipher.AES import MODE_CBC, MODE_CTR
-
+from Cryptodome.Cipher.AES import MODE_CTR
+from Cryptodome.Util import Counter
 
 log = logging.getLogger(__name__)
 
 DESCRIPTION = "Latrodectus configuration parser."
 AUTHOR = "enzok"
-
 
 yara_rule = """
 rule Latrodectus
@@ -75,19 +73,14 @@ def yara_scan(raw_data):
     except Exception as e:
         print(e)
 
-def decrypt_with_ctr(cbc_cipher, nonce: bytes, data: bytes) -> bytes:
-    key = cbc_cipher.algorithm.key
-    cipher = AES.new(key, mode=MODE_CTR, nonce=nonce)
-    return cipher.decrypt(data)
-
 
 def decrypt_string_aes(data: bytes, key: bytes) -> bytes:
     len_data = int.from_bytes(data[:2], "little")
     iv = data[2:18]
     data = data[18 : 18 + len_data]
-    cbc_cipher = AES.new(key, mode=MODE_CBC, iv=iv)
-    decrypted_data = decrypt_with_ctr(cbc_cipher, iv, data)
-    return decrypted_data
+    ctr = Counter.new(128, initial_value=int.from_bytes(iv, "big"))
+    cipher = AES.new(key, mode=MODE_CTR, counter=ctr)
+    return cipher.decrypt(data)
 
 
 def prng_seed(seed):
