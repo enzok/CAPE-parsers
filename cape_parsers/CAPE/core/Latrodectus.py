@@ -206,6 +206,9 @@ def extract_config(filebuf):
                 }
             except Exception as e:
                 log.error("Error: %s", e)
+
+        if not cfg['C2'] and not cfg["Group name"]:
+            cfg = None
     return cfg
 
 
