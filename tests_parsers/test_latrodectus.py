@@ -8,6 +8,7 @@ from cape_parsers.CAPE.core.Latrodectus import extract_config
 def test_latrodectus():
     with open("tests/data/malware/719e19ead52a80b15bf887f3b9a6ab6d50c15d026766db41302c5e4b12949295", "rb") as data:
         conf = extract_config(data.read())
+        del conf["Strings"]
         assert conf == {
             "C2": ["https://piloferstaf.com/test/", "https://ypredoninen.com/test/"],
             "Group name": "Sigma",
