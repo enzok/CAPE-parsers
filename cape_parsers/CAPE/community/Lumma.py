@@ -241,7 +241,6 @@ def extract_config(data):
     if offset:
         key = data[offset + 16 : offset + 48]
         nonce = b"\x00\x00\x00\x00" + data[offset + 48 : offset + 56]
-        rvas = []
 
         for i in range(9):
             try:
