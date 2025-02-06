@@ -15,6 +15,7 @@ import logging
 import re
 import string
 from collections import OrderedDict
+from contextlib import suppress
 
 import pefile
 from Cryptodome.Cipher import ARC4
@@ -24,7 +25,7 @@ FLAG = {b"\x00": "Disable", b"\x01": "Enable"}
 
 # From JPCERT and Elastic Security Labs
 idx_list = {
-    0: "Host:Port:Password", # String containing “domain:port:enable_tls“ separated by the “\x1e” characte
+    0: "Host:Port:Password", # String containing "domain:port:enable_tls" separated by the "\x1e" characte
     1: "Botnet", # Name of the botnet
     2: "Connect interval", # Interval in second between connection attempt to C2
     3: "Install flag", # Install REMCOS on the machine host
@@ -47,7 +48,7 @@ idx_list = {
     20: "Screenshot flag", # Enable screen recording capability
     21: "Screenshot time", # The time interval in minute for capturing each screenshot
     22: "Take Screenshot option", # Enable screen recording for specific window names
-    23: "Take screenshot title", # String containing window names separated by the “;” character
+    23: "Take screenshot title", # String containing window names separated by the ";” character
     24: "Take screenshot time", #s The time interval in second for capturing each screenshot when a specific window name is found in the current foreground window title
     25: "Screenshot parent directory", # Parent directory of the screenshot folder. Integer mapped to an hardcoded path
     26: "Screenshot folder", # Name of the screenshot folder
@@ -66,7 +67,7 @@ idx_list = {
     39: "Disable UAC flage", # Disable UAC in the registry
     40: "Logging mode", # Set logging mode: 0 = disabled, 1 = minimized in tray, 2 = console logging
     41: "Connect delay", # Delay in second before the first connection attempt to the C2
-    42: "Keylogger specific window names", # String containing window names separated by the “;” character
+    42: "Keylogger specific window names", # String containing window names separated by the ";” character
     43: "Browser cleaning on startup flag", # Enable cleaning web browsers’ cookies and logins on REMCOS startup
     44: "Browser cleaning only for the first run flag", # Enable web browsers cleaning only on the first run of Remcos
     45: "Browser cleaning sleep time in minutes", # Sleep time in minute before cleaning the web browsers
@@ -188,13 +189,17 @@ def extract_config(filebuf):
                     # various separators have been observed
                     separator = next((x for x in (b"|", b"\x1e", b"\xff\xff\xff\xff") if x in cont))
                     host, port, password = cont.split(separator, 1)[0].split(b":")
-                    p_data["Control"] = f"tcp://{host.decode()}:{port.decode()}:{password.decode()}"
+                    p_data["Control"] = f"tcp://{host.decode()}:{port.decode()}"
+                    p_data["Password"] = password.decode()
                 else:
                     p_data[idx_list[i]] = cont
 
             for k, v in p_data.items():
                 if k in utf_16_string_list:
                     v = v.decode("utf16").strip("\00") if isinstance(v, bytes) else v
+                if isinstance(v, bytes):
+                    with suppress(Exception):
+                        v = v.decoed()
                 config[k] = v
 
     except Exception as e:
