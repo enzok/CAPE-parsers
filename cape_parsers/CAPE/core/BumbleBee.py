@@ -163,7 +163,7 @@ def extract_2024(pe, filebuf):
     dgaseed_offset = pe.get_dword_from_offset(dga1_init_offset + 15)
     dgaseed_rva = pe.get_rva_from_offset(dga1_init_offset + 19) + dgaseed_offset
     dgaseed_data = pe.get_qword_at_rva(dgaseed_rva)
-    cfg["DGA seed"] = int(dgaseed_data)
+    cfg["DGA seed"] = str(int(dgaseed_data))
 
     numdga_offset = pe.get_dword_from_offset(dga1_init_offset + 22)
     numdga_rva = pe.get_rva_from_offset(dga1_init_offset + 26) + numdga_offset
