@@ -13,15 +13,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import struct
+import logging
 
 import pefile
-
 import yara
 
 DESCRIPTION = "Azorult configuration parser."
 AUTHOR = "kevoreilly"
 
-rule_source = """
+YARA_RULES = """
 rule Azorult
 {
     meta:
@@ -35,47 +35,32 @@ rule Azorult
 }
 """
 
+rules = yara.compile(source=YARA_RULES)
+
 MAX_STRING_SIZE = 32
-
-
-def yara_scan(raw_data, rule_name):
-    yara_rules = yara.compile(source=rule_source)
-    matches = yara_rules.match(data=raw_data)
-
-    for match in matches:
-        if match.rule != "Azorult":
-            continue
-
-        for block in match.strings:
-            for instance in block.instances:
-                if block.identifier == rule_name:
-                    return {block.identifier: instance.offset}
-
-
-def string_from_offset(data, offset):
-    return data[offset : offset + MAX_STRING_SIZE].split(b"\0", 1)[0]
+log = logging.getLogger()
 
 
 def extract_config(filebuf):
     pe = pefile.PE(data=filebuf, fast_load=False)
     image_base = pe.OPTIONAL_HEADER.ImageBase
 
-    ref_c2 = yara_scan(filebuf, "$ref_c2")
-    if ref_c2 is None:
-        return
-
-    ref_c2_offset = int(ref_c2["$ref_c2"])
-
-    c2_list_va = struct.unpack("i", filebuf[ref_c2_offset + 21 : ref_c2_offset + 25])[0]
-    c2_list_rva = c2_list_va - image_base
-
-    try:
-        c2_list_offset = pe.get_offset_from_rva(c2_list_rva)
-    except pefile.PEFormatError as err:
-        print(err)
-
-    c2_domain = string_from_offset(filebuf, c2_list_offset)
-    if c2_domain:
-        return {"address": c2_domain.decode()}
-
+    for match in rules.match(data=filebuf):
+        for block in match.strings:
+            for instance in block.instances:
+                _, _, blob = instance.offset, block.identifier, instance.matched_data
+                try:
+                    cnc_offset = struct.unpack("i", blob[21:25])[0]
+                    cnc = pe.get_data(cnc_offset-image_base, 32).split(b"\x00")[0]
+                    if cnc:
+                        if not cnc.startswith(b"http"):
+                            cnc = b"http://" + cnc
+                        return {"cncs": [cnc.decode()]}
+                except Exception as e:
+                    log.error("Error parsing Azorult config: %s", e)
     return {}
+
+if __name__ == "__main__":
+    import sys
+    with open(sys.argv[1], "rb") as f:
+        print(extract_config(f.read()))
