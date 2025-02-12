@@ -36,21 +36,18 @@ rule Azorult
 """
 
 rules = yara.compile(source=YARA_RULES)
-
-MAX_STRING_SIZE = 32
 log = logging.getLogger()
 
 
 def extract_config(filebuf):
-    pe = pefile.PE(data=filebuf, fast_load=False)
+    pe = pefile.PE(data=filebuf, fast_load=True)
     image_base = pe.OPTIONAL_HEADER.ImageBase
 
     for match in rules.match(data=filebuf):
         for block in match.strings:
             for instance in block.instances:
-                _, _, blob = instance.offset, block.identifier, instance.matched_data
                 try:
-                    cnc_offset = struct.unpack("i", blob[21:25])[0]
+                    cnc_offset = struct.unpack("i", instance.matched_data[21:25])[0]
                     cnc = pe.get_data(cnc_offset-image_base, 32).split(b"\x00")[0]
                     if cnc:
                         if not cnc.startswith(b"http"):
