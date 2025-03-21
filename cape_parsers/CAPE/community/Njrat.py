@@ -174,15 +174,15 @@ def extract_config(data):
     dotnet_file_parser = Parser(data=data)
     config_dict = get_config_dict(dotnet_file_parser, data)
     config = get_clean_config(config_dict)
-
-    if config.get("domain") and config.get("port"):
-        conf["cncs"] = [f"{config['domain']}:{config['port']}"]
-
-    if config.get("campaign_id"):
-        conf["campaign id"] = config["campaign_id"]
-
-    if config.get("version"):
-        conf["version"] = config["version"]
+    if config:
+        if config.get("domain") and config.get("port"):
+            conf["cncs"] = [f"{config['domain']}:{config['port']}"]
+    
+        if config.get("campaign_id"):
+            conf["campaign id"] = config["campaign_id"]
+    
+        if config.get("version"):
+            conf["version"] = config["version"]
 
     dotnet_file_parser.close()
     return conf
