@@ -168,7 +168,7 @@ def extract_config(filebuf):
 
                 if is_aes and key:
                     for i in range(len(data)):
-                        str_val = get_aes_string(data[i : i + 256], key)
+                        str_val = get_aes_string(data[i : i + 512], key)
                         if str_val and len(str_val) > 2:
                             str_vals.append(str_val)
                 else:
