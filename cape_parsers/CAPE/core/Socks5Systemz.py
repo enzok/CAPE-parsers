@@ -20,6 +20,6 @@ def extract_config(data):
                 config_dict["C2s"].append(line)
             elif line and "\\" in line:
                 config_dict.setdefault("Timestamp path", []).append(line)
-            elif "." in line:
+            elif "." in line and "=" not in line and line not in config_dict["C2s"]:
                 config_dict.setdefault("Dummy domain", []).append(line)
         return config_dict
