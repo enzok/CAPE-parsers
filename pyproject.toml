@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "CAPE-parsers"
-version = "0.1.35"
+version = "0.1.36"
 description = "CAPE: Malware Configuration Extraction"
 authors = ["Kevin O'Reilly <kev@capesandbox.com>", "doomedraven <doomedraven@capesandbox.com>"]
 license = "MIT"
@@ -24,7 +24,7 @@ yara-python = ">=4.5.1"
 dnfile = ">=0.15.1"
 dncil = ">=1.0.2"
 unicorn = "2.1.1"
-rat-king-parser = ">=4.0.0"
+rat-king-parser = ">=4.1.0"
 
 ruff = ">=0.7.2"
 # isort = ">=5.13.2"
