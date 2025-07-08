@@ -43,13 +43,15 @@ RULE_SOURCE_LUMMA_NEW_KEYS = """rule LummaConfigNewKeys
         author = "YungBinary"
     strings:
         $key_nonce = {
-            B8 ?? ?? ?? ??
-            BF ?? ?? ?? ??
+            B8 [4]
+            (BF ?? ?? ?? ??
+            B9 08 00 00 00|
             B9 08 00 00 00
+            BF ?? ?? ?? ??)
             96
             F3 A5
             96
-            B8 ?? ?? ?? ??
+            B8
         }
     condition:
         uint16(0) == 0x5A4D and $key_nonce
@@ -63,7 +65,7 @@ RULE_SOURCE_LUMMA_NEW_ENCRYPTED_C2 = """rule LummaConfigNewEncryptedStrings
         $encrypted_array = {
             C1 E? 07
             8D 8? [4]
-            8D 74 24 10
+            8D 74 24 ??
             FF [1-3]
             56
             5?
