@@ -43,7 +43,6 @@ RULE_SOURCE_LUMMA_NEW_KEYS = """rule LummaConfigNewKeys
         author = "YungBinary"
     strings:
         $key_nonce = {
-            88 44 24 ??
             B8 ?? ?? ?? ??
             BF ?? ?? ?? ??
             B9 08 00 00 00
@@ -62,11 +61,12 @@ RULE_SOURCE_LUMMA_NEW_ENCRYPTED_C2 = """rule LummaConfigNewEncryptedStrings
         author = "YungBinary"
     strings:
         $encrypted_array = {
-            0F B6 C?
-            C1 E0 07
-            8D 80 ?? ?? ?? ??
+            C1 E? 07
+            8D 8? [4]
             8D 74 24 10
-            FF
+            FF [1-3]
+            56
+            5?
         }
     condition:
         uint16(0) == 0x5A4D and $encrypted_array
@@ -285,16 +285,16 @@ def extract_config(data):
     key = None
     nonce = None
     for offset in yara_scan_generator(data, RULE_SOURCE_LUMMA_NEW_KEYS):
-        key_rva = struct.unpack('i', data[offset + 5 : offset + 9])[0]
+        key_rva = struct.unpack('i', data[offset + 1 : offset + 5])[0]
         key_offset = pe.get_offset_from_rva(key_rva - image_base)
         key = data[key_offset : key_offset + 32]
-        nonce_rva = struct.unpack('i', data[offset + 24 : offset + 28])[0]
+        nonce_rva = struct.unpack('i', data[offset + 20 : offset + 24])[0]
         nonce_offset = pe.get_offset_from_rva(nonce_rva - image_base)
         nonce = b'\x00\x00\x00\x00' + data[nonce_offset : nonce_offset + 8]
 
     if key and nonce:
         for offset in yara_scan_generator(data, RULE_SOURCE_LUMMA_NEW_ENCRYPTED_C2):
-            encrypted_strings_rva = struct.unpack('i', data[offset + 8 : offset + 12])[0]
+            encrypted_strings_rva = struct.unpack('i', data[offset + 5 : offset + 9])[0]
             encrypted_strings_offset = pe.get_offset_from_rva(encrypted_strings_rva - image_base)
             step_size = 0x80
             counter = 2
