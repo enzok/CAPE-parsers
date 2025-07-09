@@ -37,7 +37,7 @@ for s in strings:
         temp = decrypt(s, str_hash_data, str_alphabet)
         if is_ascii(temp) and len(temp) > 3:
             print(temp.decode('utf-8'))
-    except:
+    except Exception:
         continue
 
 decrypt('1RydQIOr3Zcp6emn RYv8IGzgUKS6r5ThSdqDVBERAP2Ir 0JQ1=', str_hash_data, str_alphabet)
