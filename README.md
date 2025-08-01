@@ -13,6 +13,8 @@ version: str
 mutex: str
 user_agent: str
 build: str
+cryptokey: str
+cryptokey_type: str (algorithm). Ex: RC4, RSA public key. salsa20, (x)chacha20
 raw: {any other data goes here}
 ```
 * All CNC entries should be in URL format. aka `<schema>://<hostname>:<port>/<uri>`
