@@ -1,7 +1,7 @@
 import struct
 import pefile
 import yara
-
+from contextlib import suppress
 
 # Hash = 69ba4e2995d6b11bb319d7373d150560ea295c02773fe5aa9c729bfd2c334e1e
 
@@ -46,10 +46,10 @@ def xor_data(data, key):
 
 
 def extract_config(data):
-    config_dict = {}
+    config = {}
 
     # Attempt to extract via old method
-    try:
+    with suppress(Exception):
         domain = ""
         uri = ""
         lines = data.decode().split("\n")
@@ -59,14 +59,12 @@ def extract_config(data):
             if line.startswith("/") and line[-4] == ".":
                 uri = line
         if domain and uri:
-            config_dict.setdefault("C2", []).append(f"{domain}{uri}")
-            return config_dict
-    except Exception:
-        pass
+            config.setdefault("CNCs", []).append(f"{domain}{uri}")
+            return config
 
     # Try with new method
 
-    #config_dict["Strings"] = []
+    # config_dict["Strings"] = []
     pe = pefile.PE(data=data, fast_load=True)
     image_base = pe.OPTIONAL_HEADER.ImageBase
     domain = ""
@@ -84,17 +82,17 @@ def extract_config(data):
             if rule_str_name.startswith("$decode"):
                 key_rva = data[str_decode_offset + 3 : str_decode_offset + 7]
                 encoded_str_rva = data[str_decode_offset + 8 : str_decode_offset + 12]
-                #dword_rva = data[str_decode_offset + 21 : str_decode_offset + 25]
+                # dword_rva = data[str_decode_offset + 21 : str_decode_offset + 25]
 
             key_offset = pe.get_offset_from_rva(struct.unpack("i", key_rva)[0] - image_base)
             encoded_str_offset = pe.get_offset_from_rva(struct.unpack("i", encoded_str_rva)[0] - image_base)
-            #dword_offset = struct.unpack("i", dword_rva)[0]
-            #dword_name = f"dword_{hex(dword_offset)[2:]}"
+            # dword_offset = struct.unpack("i", dword_rva)[0]
+            # dword_name = f"dword_{hex(dword_offset)[2:]}"
 
             key = data[key_offset : key_offset + str_size]
             encoded_str = data[encoded_str_offset : encoded_str_offset + str_size]
             decoded_str = xor_data(encoded_str, key).decode()
-            #config_dict["Strings"].append({dword_name : decoded_str})
+            # config_dict["Strings"].append({dword_name : decoded_str})
 
             if last_str in ("http://", "https://"):
                 domain += decoded_str
@@ -114,12 +112,12 @@ def extract_config(data):
             continue
 
     if domain and uri:
-        config_dict.setdefault("C2", []).append(f"{domain}{uri}")
+        config.setdefault("CNCs", []).append(f"{domain}{uri}")
 
     if botnet_id:
-        config_dict.setdefault("Botnet ID", botnet_id)
+        config.setdefault("botnet", botnet_id)
 
-    return config_dict
+    return config
 
 
 if __name__ == "__main__":

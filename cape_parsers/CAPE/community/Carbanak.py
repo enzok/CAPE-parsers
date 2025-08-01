@@ -158,22 +158,22 @@ def extract_config(filebuf):
                 if dec:
                     ver = re.findall(r"^(\d+\.\d+)$", dec)
                     if ver:
-                        cfg["Version"] = ver[0]
+                        cfg["version"] = ver[0]
 
     data = data_sections[0].get_data()
     items = data.split(b"\x00")
 
     with suppress(IndexError, UnicodeDecodeError, ValueError):
-        cfg["Unknown 1"] = decode_string(items[0], sbox).decode("utf8")
-        cfg["Unknown 2"] = decode_string(items[8], sbox).decode("utf8")
+        cfg.setdefault("raw", {})["Unknown 1"] = decode_string(items[0], sbox).decode("utf8")
+        cfg.setdefault("raw", {})["Unknown 2"] = decode_string(items[8], sbox).decode("utf8")
         c2_dec = decode_string(items[10], sbox).decode("utf8")
         if "|" in c2_dec:
             c2_dec = c2_dec.split("|")
-        cfg["C2"] = c2_dec
-        if float(cfg["Version"]) < 1.7:
-            cfg["Campaign Id"] = decode_string(items[276], sbox).decode("utf8")
+        cfg["CNCs"] = c2_dec
+        if float(cfg["version"]) < 1.7:
+            cfg["campaign"] = decode_string(items[276], sbox).decode("utf8")
         else:
-            cfg["Campaign Id"] = decode_string(items[25], sbox).decode("utf8")
+            cfg["campaign"] = decode_string(items[25], sbox).decode("utf8")
 
     return cfg
 

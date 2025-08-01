@@ -76,8 +76,8 @@ def string_from_offset(data, offset):
 
 def parse_config(data):
     parsed = {}
-    parsed["Botnet Id"] = data[4:].split(b"\x00", 1)[0].decode("utf-8")
-    parsed["Campaign Id"] = data[25:].split(b"\x00", 1)[0].decode("utf-8")
+    parsed["botnet"] = data[4:].split(b"\x00", 1)[0].decode("utf-8")
+    parsed["campaign"] = data[25:].split(b"\x00", 1)[0].decode("utf-8")
     c2s = []
     c2_data = data[46:686]
     for i in range(10):
@@ -85,16 +85,17 @@ def parse_config(data):
         chunk = chunk.rstrip(b"\x00")
         if chunk:
             c2s.append(chunk.decode("utf-8"))
-    parsed["C2s"] = c2s
-    parsed["Public Key"] = data[704:].split(b"\x00", 1)[0]
+    parsed["CNCs"] = c2s
+    parsed["cryptokey"] = data[704:].split(b"\x00", 1)[0]
+    parsed["cryptokey_type"] = "RSA Public Key"
     dns_data = data[1004:].split(b"\x00", 1)[0]
     parsed["TLS SNI"] = dns_data.split(b"~")[0].decode("utf-8").rstrip()
     parsed["DNS C2"] = dns_data.split(b"~")[1].decode("utf-8").strip()
     dns_ips = []
-    dns_ips.append(socket.inet_ntoa(data[1204:1208].split(b"\x00",1)[0]))
+    dns_ips.append(socket.inet_ntoa(data[1204:1208].split(b"\x00", 1)[0]))
     dns_ip_data = data[1208:1248]
     for i in range(10):
-        chunk = dns_ip_data[i * 4:(i + 1) * 4]
+        chunk = dns_ip_data[i * 4 : (i + 1) * 4]
         chunk = chunk.rstrip(b"\x00")
         if chunk:
             dns_ips.append(socket.inet_ntoa(chunk))
@@ -103,6 +104,7 @@ def parse_config(data):
 
 
 def extract_config(filebuf):
+    config = {}
     end_config = {}
     pe = pefile.PE(data=filebuf, fast_load=False)
     image_base = pe.OPTIONAL_HEADER.ImageBase
@@ -167,14 +169,15 @@ def extract_config(filebuf):
         enc_data = filebuf[data_offset:].split(b"\0\0", 1)[0]
         raw = decrypt_rc4(key, enc_data)
         items = list(filter(None, raw.split(b"\x00\x00")))
-        end_config["Botnet name"] = items[1].lstrip(b"\x00")
-        end_config["Campaign ID"] = items[2]
+        config["botnet"] = items[1].lstrip(b"\x00")
+        config["campaign"] = items[2]
         for item in items:
             item = item.lstrip(b"\x00")
             if item.startswith(b"http"):
-                end_config.setdefault("address", []).append(item)
+                config.setdefault("CNCs", []).append(item)
             elif len(item) == 16:
-                end_config["RC4 key"] = item
+                config["cryptokey"] = item
+                config["cryptokey_type"] = "RC4"
     elif conf_type == "2" and decrypt_key:
         conf_va = struct.unpack("I", filebuf[decrypt_conf + cva : decrypt_conf + cva + 4])[0]
         conf_offset = pe.get_offset_from_rva(conf_va + pe.get_rva_from_offset(decrypt_conf) + cva + 4)
@@ -186,14 +189,15 @@ def extract_config(filebuf):
         conf_data = filebuf[conf_offset : conf_offset + conf_size]
         raw = decrypt_rc4(key, conf_data)
         items = list(filter(None, raw.split(b"\x00\x00")))
-        end_config["Botnet name"] = items[0].decode("utf-8")
-        end_config["Campaign ID"] = items[1].decode("utf-8")
+        config["botnet"] = items[0].decode("utf-8")
+        config["campaign"] = items[1].decode("utf-8")
         for item in items:
             item = item.lstrip(b"\x00")
             if item.startswith(b"http"):
-                end_config.setdefault("address", []).append(item.decode("utf-8"))
+                config.setdefault("CNCs", []).append(item.decode("utf-8"))
             elif b"PUBLIC KEY" in item:
-                end_config["Public key"] = item.decode("utf-8").replace("\n", "")
+                config["cryptokey"] = item.decode("utf-8").replace("\n", "")
+                config["cryptokey_type"] = "RSA Public key"
     elif conf_type == "3" and rc4_chunk1 and rc4_chunk2:
         conf_va = struct.unpack("I", filebuf[decrypt_conf : decrypt_conf + 4])[0]
         conf_offset = pe.get_offset_from_rva(conf_va + pe.get_rva_from_offset(decrypt_conf) + 4)
@@ -208,8 +212,10 @@ def extract_config(filebuf):
         conf = decrypt_rc4(decrypt_key, conf_data)
         end_config = parse_config(conf)
 
-    return end_config
+    if config and end_config:
+        config = config.update({"raw": end_config})
 
+    return config
 
 if __name__ == "__main__":
     import sys
