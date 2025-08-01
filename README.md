@@ -13,6 +13,7 @@ version: str
 mutex: str
 user_agent: str
 build: str
+raw: {any other data goes here}
 ```
 * All CNC entries should be in URL format. aka `<schema>://<hostname>:<port>/<uri>`
     * Schema examples: `tcp://`, `ftp://`, `udp://`, `http(s)`, etc.
