@@ -1,4 +1,4 @@
-from cape_parsers.CAPE.core.mosterv2 import extract_config
+from cape_parsers.CAPE.community.mosterv2 import extract_config
 
 
 def test_adaptixbeacon():
