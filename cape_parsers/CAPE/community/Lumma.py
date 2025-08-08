@@ -315,9 +315,7 @@ def extract_config(data):
             counter = 2
             for i in range(12):
                 encrypted_string = data[encrypted_strings_offset : encrypted_strings_offset + 40]
-                # decoded_c2 = chacha20_xor(encrypted_string, key, nonce, counter).split(b"\x00", 1)[0]
-                chacha20_cipher = ChaCha20.new(key=key, nonce=nonce)
-                decoded_c2 = chacha20_cipher.decrypt(encrypted_string).split(b"\x00", 1)[0]
+                decoded_c2 = ChaCha20.new(key=key, nonce=nonce, initial_value=counter).decrypt(encrypted_string).split(b"\x00", 1)[0]
                 if contains_non_printable(decoded_c2):
                     break
                 config.setdefault("CNCs", []).append(decoded_c2.decode())
