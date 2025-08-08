@@ -22,9 +22,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
 
-      # --- FIX: Install Poetry ---
-      # - name: Install Poetry
-      #  uses: snok/install-poetry@v1
+      - name: Install poetry
+        shell: bash
+        run: |
+          PIP_BREAK_SYSTEM_PACKAGES=1 pip install poetry poetry-dynamic-versioning --user
 
       - name: "Build package"
         run: poetry build
