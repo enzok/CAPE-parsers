@@ -350,7 +350,9 @@ def extract_config(data):
                     c2_encrypted = data[c2_dword_offset : c2_dword_offset + 0x80]
                     counters = [0, 2, 4, 6, 8, 10, 12, 14, 16]
                     for counter in counters:
-                        decrypted = chacha20_xor(c2_encrypted, key, nonce, counter)
+                        # decrypted = chacha20_xor(c2_encrypted, key, nonce, counter)
+                        chacha20_cipher = ChaCha20.new(key=key, nonce=nonce)
+                        decrypted = chacha20_cipher.decrypt(c2_encrypted).split(b"\x00", 1)[0]
                         c2 = extract_c2_domain(decrypted)
                         if c2 is not None and len(c2) > 10:
                             config["CNCs"].append(c2.decode())
