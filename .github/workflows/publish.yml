@@ -1,11 +1,3 @@
-name: Publish Python 🐍 distribution 📦 to PyPI
-name: 'Python setup steps that can be reused'
-description: 'Install dependencies, poetry, requirements'
-inputs:
-  python-version:
-    required: true
-    description: The python version
-
 on:
   push:
     tags:
@@ -23,8 +15,7 @@ jobs:
         fetch-depth: 0 # CRITICAL for dynamic versioning
     - name: Set up Python
       uses: actions/setup-python@v5
-      with:
-        python-version: ${{ inputs.python-version }}
+
     - name: "Build package"
       run: poetry build
     - name: Store the distribution packages
