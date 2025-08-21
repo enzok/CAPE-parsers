@@ -173,8 +173,6 @@ def extract_config(data):
     version = ""
     install_dir = ""
     install_file = ""
-    domain_pattern = r""
-    ip_pattern = r"^(?:\d{1,3}\.){3}\d{1,3}$"
     version_pattern = r"^\d+\.\d{1,2}$"
     install_dir_pattern = r"^[0-9a-f]{10}$"
 
