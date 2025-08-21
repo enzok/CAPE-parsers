@@ -173,25 +173,22 @@ def extract_config(data):
     version = ""
     install_dir = ""
     install_file = ""
+    domain_pattern = r""
     ip_pattern = r"^(?:\d{1,3}\.){3}\d{1,3}$"
     version_pattern = r"^\d+\.\d{1,2}$"
     install_dir_pattern = r"^[0-9a-f]{10}$"
 
-    i = 0
-    while i < len(decoded_strings):
+    for i in range(len(decoded_strings)):
         s = decoded_strings[i]
-        if re.match(ip_pattern, s):
-            if i + 1 < len(decoded_strings):
-                path = decoded_strings[i+1]
-                final_config.setdefault("CNCs", []).append(f"http://{s}{path}")
-                i += 1  # Skip next element as it has been processed
+        if s.endswith(".php"):
+            c2 = decoded_strings[i-1]
+            final_config.setdefault("CNCs", []).append(f"http://{c2}{s}")
         elif re.match(version_pattern, s):
             version = s
         elif re.match(install_dir_pattern, s):
             install_dir = s
         elif s.endswith(".exe"):
             install_file = s
-        i += 1
 
     if version:
         final_config["version"] = version
