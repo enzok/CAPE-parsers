@@ -38,6 +38,7 @@ def decrypt(data: bytes) -> Tuple[bytes, bytes, bytes]:
 def extract_config(data: bytes) -> Dict[str, Any]:
     cfg: Dict[str, Any] = {}
     plaintext = b""
+
     pe = pefile.PE(data=data, fast_load=True)
     try:
         data_section = [s for s in pe.sections if s.Name.find(b".data") != -1][0]
