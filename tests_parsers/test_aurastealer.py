@@ -6,7 +6,7 @@ from cape_parsers.CAPE.core.AuraStealer import extract_config
 
 
 def test_aurastealer():
-    with open("tests/data/malware/bac52ffc8072893ff26cdbf1df1ecbcbb1762ded80249d3c9d420f62ed0dc202", "rb") as data:
+    with open("tests/data/malware/a9c47f10d5eb77d7d6b356be00b4814a7c1e5bb75739b464beb6ea03fc36cc85", "rb") as data:
         conf = extract_config(data.read())
         assert conf == {
             'CNCs': ['https://armydevice.shop', 'https://glossmagazine.shop'],

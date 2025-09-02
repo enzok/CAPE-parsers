@@ -37,7 +37,8 @@ def decrypt(data: bytes) -> Tuple[bytes, bytes, bytes]:
 
 def extract_config(data: bytes) -> Dict[str, Any]:
     cfg: Dict[str, Any] = {}
-    plaintext = ""
+    plaintext = b""
+
     pe = pefile.PE(data=data, fast_load=True)
     try:
         data_section = [s for s in pe.sections if s.Name.find(b".data") != -1][0]
@@ -63,7 +64,11 @@ def extract_config(data: bytes) -> Dict[str, Any]:
         offset -= 1
 
     if plaintext:
-        parsed = json.loads(plaintext.decode("utf-8", errors="ignore").rstrip("\x00"))
+        try:
+            parsed = json.loads(plaintext.decode("utf-8", errors="ignore").rstrip("\x00"))
+        except json.JSONDecodeError:
+            return cfg
+
         conf = parsed.get("conf", {})
         build = parsed.get("build", {})
         if conf:
