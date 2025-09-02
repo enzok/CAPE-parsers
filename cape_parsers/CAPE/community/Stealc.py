@@ -1,6 +1,7 @@
 import struct
 import pefile
 import yara
+import ipaddress
 from contextlib import suppress
 
 
@@ -42,6 +43,13 @@ def yara_scan(raw_data):
                 yield block.identifier, instance.offset
 
 
+def _is_ip(ip):
+    try:
+        ipaddress.ip_address(ip)
+        return True
+    except Exception:
+        return False
+
 def xor_data(data, key):
     decoded = bytearray()
     for i in range(len(data)):
@@ -66,6 +74,8 @@ def parse_text(data):
             return
         for line in lines:
             if line.startswith("http") and "://" in line:
+                domain = line
+            elif _is_ip(line):
                 domain = line
             if line.startswith("/") and line[-4] == ".":
                 uri = line
