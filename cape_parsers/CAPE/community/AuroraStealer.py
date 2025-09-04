@@ -32,7 +32,7 @@ def extract_config(data):
             key = item.split(":")[0].strip("{").strip('"')
             value = item.split(":")[1].strip('"')
             if key == "IP":
-                config_dict["CNCs"] = [value]
+                config_dict["CNCs"] = [f"tcp://{value}"]
             elif key == "BuildID":
                 config_dict["build"] = value
             else:
