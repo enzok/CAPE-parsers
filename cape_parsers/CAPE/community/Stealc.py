@@ -77,7 +77,7 @@ def parse_text(data):
                 domain = line
             elif _is_ip(line):
                 domain = line
-            if line.startswith("/") and line[-4] == ".":
+            if line.startswith("/") and len(line) >= 4 and line[-4] == ".":
                 uri = line
 
 
