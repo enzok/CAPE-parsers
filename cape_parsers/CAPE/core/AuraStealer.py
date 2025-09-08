@@ -7,6 +7,14 @@ import pefile
 from Cryptodome.Cipher import AES
 from Cryptodome.Util.Padding import unpad
 
+# Define the format for the fixed-size header part.
+# <   : little-endian
+# 32s : 32-byte string (for aes_key)
+# 16s : 16-byte string (for iv)
+# I   : 4-byte unsigned int (for dword1)
+# I   : 4-byte unsigned int (for dword2)
+HEADER_FORMAT = "<32s16sII"
+HEADER_SIZE = struct.calcsize(HEADER_FORMAT)  # This will be 32 + 16 + 4 + 4 = 56 bytes
 
 def parse_blob(data: bytes):
     """
@@ -16,15 +24,9 @@ def parse_blob(data: bytes):
       - Next 2 DWORDs (8 bytes total) = XOR to get cipher data size
       - Remaining bytes = cipher data of that size
     """
-    offset = 0
-    aes_key = data[offset:offset + 32]
-    offset += 32
-    iv = data[offset:offset + 16]
-    offset += 16
-    dword1, dword2 = struct.unpack_from("<II", data, offset)
-    cipher_size = dword1 ^ dword2
-    offset += 8
-    cipher_data = data[offset:offset + cipher_size]
+    aes_key, iv, dword1, dword2 = struct.unpack_from(HEADER_FORMAT, data, 0)
+    ciphertext_size = dword1 ^ dword2
+    cipher_data = data[HEADER_SIZE : HEADER_SIZE + ciphertext_size]
     return aes_key, iv, cipher_data
 
 
