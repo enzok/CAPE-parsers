@@ -12,7 +12,7 @@ def test_latrodectus():
         assert conf == {
             "CNCs": ["https://piloferstaf.com/test/", "https://ypredoninen.com/test/"],
             "campaign": 2386938644,
-            "version": "1.8",
+            "version": "1.8.4",
             "cryptokey": "XTpawuOlVTpNs6JsxElGCO0gbRa6Gkw7oEmotQWSfM9Qu3j1GYCDs2JETmfatWCI",
             "cryptokey_type": "RC4",
             "raw": {
