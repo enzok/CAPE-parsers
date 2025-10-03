@@ -56,7 +56,7 @@ def extract_config(data: bytes):
                 config_dict["Password"] = lines[base + x + 1]
                 if "@" in lines[base + x + 2]:
                     config_dict["EmailTo"] = lines[base + x + 2]
-                is_c2_found = True    
+                is_c2_found = True
                 break
         # Get Persistence Payload Filename
         for x in range(2, 22):
