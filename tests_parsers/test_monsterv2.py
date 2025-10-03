@@ -1,5 +1,5 @@
 import pytest
-from cape_parsers.CAPE.community.monsterv2 import extract_config
+from cape_parsers.CAPE.community.MonsterV2 import extract_config
 
 @pytest.mark.xfail(reason="todo")
 def test_monsterv2():
