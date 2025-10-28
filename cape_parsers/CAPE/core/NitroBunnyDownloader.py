@@ -50,7 +50,7 @@ def yara_scan(raw_data):
     try:
         return yara_rules.match(data=raw_data)
     except Exception as e:
-        print(e)
+        return None
 
 
 def read_dword(data, off):
@@ -107,12 +107,10 @@ def extract_config(filebuf):
 
     try:
         pe = pefile.PE(data=filebuf, fast_load=True)
-        image_base = pe.OPTIONAL_HEADER.ImageBase
         config_length = pe.get_dword_from_offset(config_code_offset + 7)
         config_offset = pe.get_dword_from_offset(config_code_offset + 14)
         rva = pe.get_rva_from_offset(config_code_offset + 18)
-        config_va = image_base + rva + config_offset
-        config_rva = config_va - image_base
+        config_rva = rva + config_offset
         data = pe.get_data(config_rva, config_length)
         off = 0
         raw = cfg["raw"] = {}
