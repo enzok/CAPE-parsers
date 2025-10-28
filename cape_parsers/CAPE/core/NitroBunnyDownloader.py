@@ -50,6 +50,7 @@ def yara_scan(raw_data):
     try:
         return yara_rules.match(data=raw_data)
     except Exception as e:
+        print(e)
         return None
 
 
