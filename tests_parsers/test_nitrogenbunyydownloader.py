@@ -29,9 +29,7 @@ def test_nitrogenbunnydownloader():
                 }
             ],
             "CNCs": [
-                [
                     "https://617e7511-4.b-cdn.net",
                     "https://38.132.122.237",
-                ],
             ],
         }
