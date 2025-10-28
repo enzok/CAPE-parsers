@@ -28,11 +28,10 @@ def test_nitrogenbunnydownloader():
                     "unknown_2": 1765860472,
                 }
             ],
-            "port": [443],
             "CNCs": [
                 [
-                    "617e7511-4.b-cdn.net",
-                    "38.132.122.237",
+                    "https://617e7511-4.b-cdn.net",
+                    "https://38.132.122.237",
                 ],
             ],
         }
