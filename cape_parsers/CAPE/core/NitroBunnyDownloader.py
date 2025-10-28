@@ -76,7 +76,7 @@ def read_utf16le_string(data, off, length):
     return s, off + length
 
 
-def read_string_list(data, off, count, label):
+def read_string_list(data, off, count):
     items = []
     for i in range(count):
         length_words, off = read_qword(data, off)
@@ -118,13 +118,13 @@ def extract_config(filebuf):
         raw = cfg["raw"] = {}
         cfg["port"], off = read_dword(data, off)
         num, off = read_dword(data, off)
-        cfg["CNCs"], off = read_string_list(data, off, num, "c2")
+        cfg["CNCs"], off = read_string_list(data, off, num)
         num, off = read_qword(data, off)
         raw["user_agent"], off = read_utf16le_string(data, off, num)
         num, off = read_dword(data, off)
-        raw["http_header_items"], off = read_string_list(data, off, num, "header")
+        raw["http_header_items"], off = read_string_list(data, off, num)
         num, off = read_dword(data, off)
-        raw["uri_list"], off = read_string_list(data, off, num, "uri")
+        raw["uri_list"], off = read_string_list(data, off, num)
         raw["unknown_1"], off = read_dword(data, off)
         raw["unknown_2"], off = read_dword(data, off)
     except Exception as e:
