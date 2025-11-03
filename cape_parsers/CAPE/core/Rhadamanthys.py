@@ -150,6 +150,8 @@ def lzo_noheader_decompress(data: bytes, decompressed_size: int):
         ctrl = data[src]
         src += 1
 
+        # Special short match
+        # Copies exactly 3 bytes from dst starting match_len + 1 bytes back.
         if ctrl == 0x20:
             match_len = data[src]
             src += 1
@@ -159,21 +161,28 @@ def lzo_noheader_decompress(data: bytes, decompressed_size: int):
             dst.extend(dst[start:end])
 
         elif ctrl >= 0xE0 or ctrl == 0x40:
-            x = ((ctrl >> 5) - 1) + 3
-            if ctrl >= 0xE0:
-                copy_len = data[src] + x
-            elif ctrl == 0x40:
-                copy_len = x
-            start = data[src + 1]
-            if ctrl == 0x40:
-                start = data[src]
-            if ctrl >= 0xE0:
+            # Compute base copy length from the upper bits of ctrl
+            base_len = ((ctrl >> 5) - 1) + 3
+
+            if ctrl == 0xE0:
+                # Long copy: extra length byte follows
+                copy_len = base_len + data[src]
+                # Offset is byte after
+                start = data[src + 1]
                 src += 2
             elif ctrl == 0x40:
+                # Short copy: offset byte after control code
+                copy_len = base_len
+                start = data[src]
                 src += 1
+
+            # Calculate offset in output buffer
             offset = len(dst) - start - 1
+
             #print(f"Control code: {hex(ctrl)}, Offset backtrack length: {hex(start)}, Current offset: {hex(len(dst))}, New offset: {hex(len(dst) - start)}, Length to copy: {hex(copy_len)}")
-            dst.extend(dst[offset:offset+copy_len])
+
+            # Copy from previously decompressed data
+            dst.extend(dst[offset:offset + copy_len])
 
         else:
             # Literal run
@@ -243,11 +252,12 @@ def extract_config(data):
 
         custom_alphabets = [
             b"ABC1fghijklmnop234NOPQRSTUVWXY567DEFGHIJKLMZ089abcdeqrstuvwxyz-|",
-            b"4NOPQRSTUVWXY567DdeEqrstuvwxyz-ABC1fghop23Fijkbc|lmnGHIJKLMZ089a"
+            b"4NOPQRSTUVWXY567DdeEqrstuvwxyz-ABC1fghop23Fijkbc|lmnGHIJKLMZ089a", # 0.9.2
+            b"3Fijkbc|l4NOPQRSTUVWXY567DdewxEqrstuvyz-ABC1fghop2mnGHIJKLMZ089a", # 0.9.3
         ]
 
         # Extract base64 strings
-        extracted_strings = extract_base64_strings(data, 140, 256)
+        extracted_strings = extract_base64_strings(data, 100, 256)
         if not extracted_strings:
             return config_dict
 
@@ -267,7 +277,7 @@ def extract_config(data):
                     return config_dict
                 else:
                     # Handle new variants that compress the Command and Control server(s)
-                    custom_b64_decoded = custom_b64decode(string, custom_alphabets[1])
+                    custom_b64_decoded = custom_b64decode(string, custom_alphabets[2])
                     xor_key = chacha20_xor(custom_b64_decoded, key, nonce)
                     config = decrypt_config(xor_key)
 
@@ -276,6 +286,19 @@ def extract_config(data):
                         return config_dict
 
                     decompressed = lzo_noheader_decompress(parsed['compressed_data'], parsed['decompressed_size'])
+
+                    # Try old alphabet for 0.9.2
+                    if not decompressed:
+                        custom_b64_decoded = custom_b64decode(string, custom_alphabets[1])
+                        xor_key = chacha20_xor(custom_b64_decoded, key, nonce)
+                        config = decrypt_config(xor_key)
+
+                        parsed = parse_compression_header(config)
+                        if not parsed:
+                            return config_dict
+
+                        decompressed = lzo_noheader_decompress(parsed['compressed_data'], parsed['decompressed_size'])
+                    
 
                     cncs = [f"https://{chunk.decode()}" for chunk in pattern.split(decompressed) if chunk]
                     if cncs:
