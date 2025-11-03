@@ -127,14 +127,15 @@ def extract_config(filebuf):
         raw["unknown_1"], off = read_dword(data, off)
         raw["unknown_2"], off = read_dword(data, off)
 
-        if port and cncs:
+        if cncs:
+            cfg["CNCs"] = []
             schema = {80: "http", 443: "https"}.get(port, "tcp")
             for cnc in cncs:
                 cnc = f"{schema}://{cnc}"
                 if port not in (80, 443):
                     cnc += f":{port}"
-                cfg["CNCs"].setdefault(cnc)
 
+                cfg["CNCs"].append(cnc)
 
     except Exception as e:
         log.error("Error: %s", e)
