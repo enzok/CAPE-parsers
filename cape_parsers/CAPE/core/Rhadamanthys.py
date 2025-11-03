@@ -164,7 +164,7 @@ def lzo_noheader_decompress(data: bytes, decompressed_size: int):
             # Compute base copy length from the upper bits of ctrl
             base_len = ((ctrl >> 5) - 1) + 3
 
-            if ctrl == 0xE0:
+            if ctrl >= 0xE0:
                 # Long copy: extra length byte follows
                 copy_len = base_len + data[src]
                 # Offset is byte after
