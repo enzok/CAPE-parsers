@@ -50,6 +50,7 @@ def yara_scan(raw_data):
     try:
         return yara_rules.match(data=raw_data)
     except Exception as e:
+        print(e)
         return None
 
 
@@ -114,9 +115,9 @@ def extract_config(filebuf):
         data = pe.get_data(config_rva, config_length)
         off = 0
         raw = cfg["raw"] = {}
-        cfg["port"], off = read_dword(data, off)
+        port, off = read_dword(data, off)
         num, off = read_dword(data, off)
-        cfg["CNCs"], off = read_string_list(data, off, num)
+        cncs, off = read_string_list(data, off, num)
         num, off = read_qword(data, off)
         raw["user_agent"], off = read_utf16le_string(data, off, num)
         num, off = read_dword(data, off)
@@ -125,6 +126,16 @@ def extract_config(filebuf):
         raw["uri_list"], off = read_string_list(data, off, num)
         raw["unknown_1"], off = read_dword(data, off)
         raw["unknown_2"], off = read_dword(data, off)
+
+        if port and cncs:
+            schema = {80: "http", 443: "https"}.get(port, "tcp")
+            for cnc in cncs:
+                cnc = f"{schema}://{cnc}"
+                if port not in (80, 443):
+                    cnc += f":{port}"
+                cfg["CNCs"].setdefault(cnc)
+
+
     except Exception as e:
         log.error("Error: %s", e)
         return None
