@@ -32,14 +32,15 @@ rule NitroBunnyDownloader
         cape_type = "NitroBunnyDownloader Payload"
         hash = "960e59200ec0a4b5fb3b44e6da763f5fec4092997975140797d4eec491de411b"
     strings:
-        $config = {E8 [3] 00 41 B8 ?? ?? 00 00 48 8D 15 [3] 00 48 89 C1 48 89 ?? E8 [3] 00}
+        $config1 = {E8 [3] 00 41 B8 ?? ?? 00 00 48 8D 15 [3] 00 48 89 C1 48 89 ?? E8 [3] 00}
+        $config2 = {E8 [3] 00 48 8D 15 [3] 00 41 B8 ?? ?? 00 00 48 89 C1 48 89 ?? E8 [3] 00}        
         $string1 = "X-Amz-User-Agent:" wide
         $string2 = "Amz-Security-Flag:" wide
         $string3 = "/cart" wide
         $string4 = "Cookie: " wide
         $string5 = "wishlist" wide
     condition:
-        uint16(0) == 0x5A4D and $config and 2 of ($string*)
+        uint16(0) == 0x5A4D and 1 of ($config*) and 2 of ($string*)
 }
 """
 
@@ -93,25 +94,41 @@ def extract_config(filebuf):
 
     cfg = {}
     config_code_offset = None
+    config_size_offset = None
+    config_offset = None
+    rva_offset = None
+
     for hit in yara_hit:
         if hit.rule != "NitroBunnyDownloader":
             continue
 
         for item in hit.strings:
             for instance in item.instances:
-                if "$config" in item.identifier:
+                if item.identifier == "$config1":
                     config_code_offset = instance.offset
+                    config_size_offset = 7
+                    config_offset= 14
+                    rva_offset = 18
                     break
+                elif item.identifier == "$config2":
+                    config_code_offset = instance.offset
+                    config_size_offset = 14
+                    config_offset= 8
+                    rva_offset = 12
+                    break
+
+            if config_code_offset:
+                break
 
     if config_code_offset is None:
         return None
 
     try:
         pe = pefile.PE(data=filebuf, fast_load=True)
-        config_length = pe.get_dword_from_offset(config_code_offset + 7)
-        config_offset = pe.get_dword_from_offset(config_code_offset + 14)
-        rva = pe.get_rva_from_offset(config_code_offset + 18)
-        config_rva = rva + config_offset
+        config_length = pe.get_dword_from_offset(config_code_offset + config_size_offset)
+        config = pe.get_dword_from_offset(config_code_offset + config_offset)
+        rva = pe.get_rva_from_offset(config_code_offset + rva_offset)
+        config_rva = rva + config
         data = pe.get_data(config_rva, config_length)
         off = 0
         raw = cfg["raw"] = {}
