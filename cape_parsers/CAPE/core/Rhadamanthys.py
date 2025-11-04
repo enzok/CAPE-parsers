@@ -257,8 +257,6 @@ def handle_encrypted_string(encrypted_string: str) -> list:
         Command and Control server list, may be empty
     """
 
-    pattern = re.compile(b'.\x80')
-
     for alphabet in CUSTOM_ALPHABETS:
         try:
             custom_b64_decoded = custom_b64decode(encrypted_string, alphabet)
@@ -282,6 +280,7 @@ def handle_encrypted_string(encrypted_string: str) -> list:
 
             # Decompress LZO-like compression
             decompressed = lzo_noheader_decompress(parsed['compressed_data'], parsed['decompressed_size'])
+            pattern = re.compile(b'.' + bytes([decompressed[1]]))
 
             cncs = [f"https://{chunk.decode()}" for chunk in pattern.split(decompressed) if chunk]
             return cncs
