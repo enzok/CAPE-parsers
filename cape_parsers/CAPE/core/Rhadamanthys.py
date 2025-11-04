@@ -273,13 +273,12 @@ def handle_encrypted_string(encrypted_string: str) -> list:
             # Attempt to extract C2 url, only works in version prior to 0.9.2
             c2_url = extract_c2_url(config)
             if c2_url:
-                config_dict = {"CNCs": [c2_url]}
-                return config_dict
+                return [c2_url]
 
             # Parse header
             parsed = parse_compression_header(config)
             if not parsed:
-                return config_dict
+                continue
 
             # Decompress LZO-like compression
             decompressed = lzo_noheader_decompress(parsed['compressed_data'], parsed['decompressed_size'])
