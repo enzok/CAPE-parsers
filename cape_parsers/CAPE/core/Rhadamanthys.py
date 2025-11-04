@@ -251,7 +251,6 @@ def parse_compression_header(config: bytes):
 
 def handle_encrypted_string(encrypted_string: str) -> list:
     """
-    Description: Handle encrypted strings, returns 
     Args:
         encrypted_string: a str representing
     Returns:
@@ -313,7 +312,7 @@ def extract_config(data):
     for string in extracted_strings:
         cncs = handle_encrypted_string(string)
         if cncs:
-            return {"CNCs": cncs} 
+            return {"CNCs": cncs}
 
     return config_dict
 
