@@ -7,6 +7,15 @@ import json
 DESCRIPTION = "Rhadamanthys parser"
 AUTHOR = "kevoreilly, YungBinary"
 
+CUSTOM_ALPHABETS = [
+    b"3Fijkbc|l4NOPQRSTUVWXY567DdewxEqrstuvyz-ABC1fghop2mnGHIJKLMZ089a", # 0.9.3
+    b"4NOPQRSTUVWXY567DdeEqrstuvwxyz-ABC1fghop23Fijkbc|lmnGHIJKLMZ089a", # 0.9.2
+    b"ABC1fghijklmnop234NOPQRSTUVWXY567DEFGHIJKLMZ089abcdeqrstuvwxyz-|", # 0.9.X
+]
+
+CHACHA_KEY = b"\x52\xAB\xDF\x06\xB6\xB1\x3A\xC0\xDA\x2D\x22\xDC\x6C\xD2\xBE\x6C\x20\x17\x69\xE0\x12\xB5\xE6\xEC\x0E\xAB\x4C\x14\x73\x4A\xED\x51"
+CHACHA_NONCE = b"\x5F\x14\xD7\x9C\xFC\xFC\x43\x9E\xC3\x40\x6B\xBA"
+
 
 def mask32(x):
     return x & 0xFFFFFFFF
@@ -240,75 +249,70 @@ def parse_compression_header(config: bytes):
     }
 
 
+def handle_encrypted_string(encrypted_string: str) -> list:
+    """
+    Args:
+        encrypted_string: a str representing
+    Returns:
+        Command and Control server list, may be empty
+    """
+
+    for alphabet in CUSTOM_ALPHABETS:
+        try:
+            custom_b64_decoded = custom_b64decode(encrypted_string, alphabet)
+            xor_key = chacha20_xor(custom_b64_decoded, CHACHA_KEY, CHACHA_NONCE)
+            # Decrypted, may still be the compressed malware configuration
+            config = decrypt_config(xor_key)
+
+            # First byte should be 0xFF
+            if config[0] != 0xFF:
+                continue
+
+            # Attempt to extract C2 url, only works in version prior to 0.9.2
+            c2_url = extract_c2_url(config)
+            if c2_url:
+                return [c2_url]
+
+            # Parse header
+            parsed = parse_compression_header(config)
+            if not parsed:
+                continue
+
+            # Decompress LZO-like compression
+            decompressed = lzo_noheader_decompress(parsed['compressed_data'], parsed['decompressed_size'])
+            pattern = re.compile(b'.' + bytes([decompressed[1]]))
+
+            cncs = [f"https://{chunk.decode()}" for chunk in pattern.split(decompressed) if chunk]
+            return cncs
+        except Exception:
+            continue
+
+    return []
+
+
 def extract_config(data):
+    """
+    Extract Rhadamanthys malware configuration.
+    """
     config_dict = {}
+    # Extract very old variant
     magic = struct.unpack("I", data[:4])[0]
     if magic == 0x59485221:
         config_dict["CNCs"] = [data[24:].split(b"\0", 1)[0].decode()]
         return config_dict
-    else:
-        key = b"\x52\xAB\xDF\x06\xB6\xB1\x3A\xC0\xDA\x2D\x22\xDC\x6C\xD2\xBE\x6C\x20\x17\x69\xE0\x12\xB5\xE6\xEC\x0E\xAB\x4C\x14\x73\x4A\xED\x51"
-        nonce = b"\x5F\x14\xD7\x9C\xFC\xFC\x43\x9E\xC3\x40\x6B\xBA"
 
-        custom_alphabets = [
-            b"ABC1fghijklmnop234NOPQRSTUVWXY567DEFGHIJKLMZ089abcdeqrstuvwxyz-|",
-            b"4NOPQRSTUVWXY567DdeEqrstuvwxyz-ABC1fghop23Fijkbc|lmnGHIJKLMZ089a", # 0.9.2
-            b"3Fijkbc|l4NOPQRSTUVWXY567DdewxEqrstuvyz-ABC1fghop2mnGHIJKLMZ089a", # 0.9.3
-        ]
-
-        # Extract base64 strings
-        extracted_strings = extract_base64_strings(data, 100, 256)
-        if not extracted_strings:
-            return config_dict
-
-        pattern = re.compile(b'.\x80')
-        for string in extracted_strings:
-            try:
-                custom_b64_decoded = custom_b64decode(string, custom_alphabets[0])
-
-                xor_key = chacha20_xor(custom_b64_decoded, key, nonce)
-
-                # Decrypted, but may still be the compressed malware configuration
-                config = decrypt_config(xor_key)
-                # Attempt to extract C2 url, only works in version prior to 0.9.2
-                c2_url = extract_c2_url(config)
-                if c2_url:
-                    config_dict = {"CNCs": [c2_url]}
-                    return config_dict
-                else:
-                    # Handle new variants that compress the Command and Control server(s)
-                    custom_b64_decoded = custom_b64decode(string, custom_alphabets[2])
-                    xor_key = chacha20_xor(custom_b64_decoded, key, nonce)
-                    config = decrypt_config(xor_key)
-
-                    parsed = parse_compression_header(config)
-                    if not parsed:
-                        return config_dict
-
-                    decompressed = lzo_noheader_decompress(parsed['compressed_data'], parsed['decompressed_size'])
-
-                    # Try old alphabet for 0.9.2
-                    if not decompressed:
-                        custom_b64_decoded = custom_b64decode(string, custom_alphabets[1])
-                        xor_key = chacha20_xor(custom_b64_decoded, key, nonce)
-                        config = decrypt_config(xor_key)
-
-                        parsed = parse_compression_header(config)
-                        if not parsed:
-                            return config_dict
-
-                        decompressed = lzo_noheader_decompress(parsed['compressed_data'], parsed['decompressed_size'])
-
-
-                    cncs = [f"https://{chunk.decode()}" for chunk in pattern.split(decompressed) if chunk]
-                    if cncs:
-                        config_dict = {"CNCs": cncs}
-                        return config_dict
-
-            except Exception:
-                continue
-
+    # New variants, extract base64 strings
+    extracted_strings = extract_base64_strings(data, 100, 256)
+    if not extracted_strings:
         return config_dict
+
+    # Handle each encrypted string
+    for string in extracted_strings:
+        cncs = handle_encrypted_string(string)
+        if cncs:
+            return {"CNCs": cncs}
+
+    return config_dict
 
 
 if __name__ == "__main__":
