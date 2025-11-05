@@ -98,24 +98,20 @@ def extract_config(filebuf):
     config_offset = None
     rva_offset = None
 
+    CONFIG_OFFSETS = {
+        "$config1": (7, 14, 18),
+        "$config2": (14, 8, 12),
+    }
+
     for hit in yara_hit:
         if hit.rule != "NitroBunnyDownloader":
             continue
 
         for item in hit.strings:
-            for instance in item.instances:
-                if item.identifier == "$config1":
-                    config_code_offset = instance.offset
-                    config_size_offset = 7
-                    config_offset= 14
-                    rva_offset = 18
-                    break
-                elif item.identifier == "$config2":
-                    config_code_offset = instance.offset
-                    config_size_offset = 14
-                    config_offset= 8
-                    rva_offset = 12
-                    break
+            if item.identifier in CONFIG_OFFSETS and item.instances:
+                config_code_offset = item.instances[0].offset
+                config_size_offset, config_offset, rva_offset = CONFIG_OFFSETS[item.identifier]
+                break
 
             if config_code_offset:
                 break
@@ -126,9 +122,9 @@ def extract_config(filebuf):
     try:
         pe = pefile.PE(data=filebuf, fast_load=True)
         config_length = pe.get_dword_from_offset(config_code_offset + config_size_offset)
-        config = pe.get_dword_from_offset(config_code_offset + config_offset)
+        config_data_offset = pe.get_dword_from_offset(config_code_offset + config_offset)
         rva = pe.get_rva_from_offset(config_code_offset + rva_offset)
-        config_rva = rva + config
+        config_rva = rva + config_data_offset
         data = pe.get_data(config_rva, config_length)
         off = 0
         raw = cfg["raw"] = {}
