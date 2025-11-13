@@ -6,15 +6,14 @@ def test_nitrogenbunnydownloader():
         conf = extract_config(data.read())
         assert conf == {
             "CNCs": [
-                "https://4a14aac6-0.b-cdn.net/s?k=electronics",
-                "https://4a14aac6-0.b-cdn.net/gp/product/1CA256LQ0N",
-                "https://4a14aac6-0.b-cdn.net/cart",
-                "https://4a14aac6-0.b-cdn.net/hz/wishlist/ls/12886",
-                "https://23.227.203.92/s?k=electronics",
-                "https://23.227.203.92/gp/product/1CA256LQ0N",
-                "https://23.227.203.92/cart",
-                "https://23.227.203.92/hz/wishlist/ls/12886"
-            ],
+                "https://617e7511-4.b-cdn.net/s?k=electronics",
+                "https://617e7511-4.b-cdn.net/gp/product/B08J5W8Q7N",
+                "https://617e7511-4.b-cdn.net/cart",
+                "https://617e7511-4.b-cdn.net/hz/wishlist/ls/26564",
+                "https://38.132.122.237/s?k=electronics",
+                "https://38.132.122.237/gp/product/B08J5W8Q7N",
+                "https://38.132.122.237/cart",
+                "https://38.132.122.237/hz/wishlist/ls/26564"],
             "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0",
             "raw": {
                 "http_header_items": [
@@ -26,9 +25,8 @@ def test_nitrogenbunnydownloader():
                     "X-Amz-Date: 2038-03-14T03:14:07Z",
                     "Amz-Safe-Signature: TURBECOMPLEXification_0123456789",
                     "Amz-Security-Flag: Amazon8Imag genitalsHTLM5",
-                    "Cookie: sessionId=321116abbcdefXXxc8qRVfk; expires=600"
-                ],
-                "unknown_1": 1373893269,
-                "unknown_2": 1007884250
+                    "Cookie: sessionId=321116abbcdefXXxc8qRVfk; expires=600"],
+                "unknown_1": 2261840800,
+                "unknown_2": 1765860472,
             }
         }
