@@ -14,6 +14,7 @@
 
 import logging
 import struct
+from typing import List
 
 import pefile
 import yara
@@ -87,6 +88,20 @@ def read_string_list(data, off, count):
     return items, off
 
 
+def make_endpoints(cncs: List[str], port: int, uris: List[str]) -> List[str]:
+    endpoints = []
+    schema = {80: "http", 443: "https"}.get(port, "tcp")
+    for cnc in cncs:
+        cnc = f"{schema}://{cnc}"
+        if port not in (80, 443):
+            cnc += f":{port}"
+
+        for uri in uris:
+            endpoints.append(f"{cnc}/{uri.lstrip('/')}")
+
+    return endpoints
+
+
 def extract_config(filebuf):
     yara_hit = yara_scan(filebuf)
     if not yara_hit:
@@ -127,28 +142,21 @@ def extract_config(filebuf):
         config_rva = rva + config_data_offset
         data = pe.get_data(config_rva, config_length)
         off = 0
-        raw = cfg["raw"] = {}
+        cfg["CNCs"] = []
         port, off = read_dword(data, off)
         num, off = read_dword(data, off)
         cncs, off = read_string_list(data, off, num)
         num, off = read_qword(data, off)
+        raw = cfg["raw"] = {}
         raw["user_agent"], off = read_utf16le_string(data, off, num)
         num, off = read_dword(data, off)
         raw["http_header_items"], off = read_string_list(data, off, num)
         num, off = read_dword(data, off)
-        raw["uri_list"], off = read_string_list(data, off, num)
+        uris, off = read_string_list(data, off, num)
         raw["unknown_1"], off = read_dword(data, off)
         raw["unknown_2"], off = read_dword(data, off)
-
         if cncs:
-            cfg["CNCs"] = []
-            schema = {80: "http", 443: "https"}.get(port, "tcp")
-            for cnc in cncs:
-                cnc = f"{schema}://{cnc}"
-                if port not in (80, 443):
-                    cnc += f":{port}"
-
-                cfg["CNCs"].append(cnc)
+            cfg["CNCs"] = make_endpoints(cncs, port, uris)
 
     except Exception as e:
         log.error("Error: %s", e)
