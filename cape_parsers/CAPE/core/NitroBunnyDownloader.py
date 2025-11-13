@@ -92,12 +92,12 @@ def make_endpoints(cncs: List[str], port: int, uris: List[str]) -> List[str]:
     endpoints = []
     schema = {80: "http", 443: "https"}.get(port, "tcp")
     for cnc in cncs:
-        cnc = f"{schema}://{cnc}"
+        base_url = f"{schema}://{cnc}"
         if port not in (80, 443):
-            cnc += f":{port}"
+            base_url += f":{port}"
 
         for uri in uris:
-            endpoints.append(f"{cnc}/{uri.lstrip('/')}")
+            endpoints.append(f"{base_url}/{uri.lstrip('/')}")
 
     return endpoints
 
