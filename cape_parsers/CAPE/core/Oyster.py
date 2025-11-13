@@ -165,7 +165,7 @@ def make_endpoints(c2s: List[str], uris: List[str]) -> List[str]:
     endpoints = []
     for c2 in c2s:
         for uri in uris:
-            endpoints.append(f"https://{c2}:{uri}")
+            endpoints.append(f"https://{c2}/{uri.lstrip('/')}")
 
     return endpoints
 
