@@ -15,8 +15,8 @@ def test_nitrogenbunnydownloader():
                 "https://23.227.203.92/cart",
                 "https://23.227.203.92/hz/wishlist/ls/12886"
             ],
+            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0",
             "raw": {
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:130.0) Gecko/20100101 Firefox/130.0",
                 "http_header_items": [
                     "Accept: application/json, application/javascript, text/javascript; charset=utf-8",
                     "Content-Type: application/json; charset=utf-8",

@@ -148,7 +148,7 @@ def extract_config(filebuf):
         cncs, off = read_string_list(data, off, num)
         num, off = read_qword(data, off)
         raw = cfg["raw"] = {}
-        raw["user_agent"], off = read_utf16le_string(data, off, num)
+        cfg["user_agent"], off = read_utf16le_string(data, off, num)
         num, off = read_dword(data, off)
         raw["http_header_items"], off = read_string_list(data, off, num)
         num, off = read_dword(data, off)
