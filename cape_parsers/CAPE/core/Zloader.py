@@ -22,9 +22,8 @@ import socket
 import struct
 
 import pefile
-from Cryptodome.Cipher import ARC4
-
 import yara
+from Cryptodome.Cipher import ARC4
 
 log = logging.getLogger(__name__)
 
@@ -92,7 +91,7 @@ def string_from_offset(data, offset):
 
 def parse_config(data, version=None):
     for i in range(len(data) - 3, -1, -1):
-        if data[i: i + 3] == b"\x00\x00\x00":
+        if data[i : i + 3] == b"\x00\x00\x00":
             data = data[:i]
             break
 
