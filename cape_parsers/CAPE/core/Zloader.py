@@ -123,7 +123,6 @@ def parse_config(data, version=None):
         elif version == 4 and f.startswith(b"[") and f.endswith(b"]"):
             try:
                 params = json.loads(f)
-                net_params = []
                 for param in params:
                     proto = param.get("proto", "unknown")
                     ip = param.get("ip", "")
@@ -152,7 +151,6 @@ def parse_config(data, version=None):
 
 def extract_config(filebuf):
     config = {}
-    end_config = {}
     pe = pefile.PE(data=filebuf, fast_load=False)
     image_base = pe.OPTIONAL_HEADER.ImageBase
     matches = yara_rules.match(data=filebuf)
@@ -303,6 +301,7 @@ def extract_config(filebuf):
         function_end_offset = index + len(function_tail)
         function_data = filebuf[call_target_offset: function_end_offset]
         pattern = re.compile(b"\x66\x81\xF1..\x66\x89\x4D.", re.DOTALL)
+        key = 0
         for match in pattern.finditer(function_data):
             off = match.start()
             key = struct.unpack_from("<H", function_data, off + 3)[0]
