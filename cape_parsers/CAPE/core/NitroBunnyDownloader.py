@@ -20,10 +20,10 @@
 #   1. a "mov ecx, imm32" immediately before the allocator call (absent in some builds)
 #   2. "mov r8d, <size>" appearing BEFORE "lea rdx, <blob>" (the two are swapped in others)
 #   3. "mov rcx, rax" encoded as 48 89 C1 (Clang); MSVC builds emit 48 8B C8
-# $config1-3 below each pin one observed ordering of the size/lea/mov trio,
-# bracketed by the surrounding calls. Every pattern is a fixed 29 bytes, so the
-# size and lea positions come from CONFIG_OFFSETS instead of being searched for,
-# and Python validates the blob structurally afterwards.
+#   4. the memcpy call itself: b9158588... inlines it as a byte loop, loading the
+#      blob via "lea r9" (4C 8D 0D) instead of "lea rdx"
+# The rule below anchors only on the size/lea pair in either order, and Python
+# validates structurally afterwards.
 #
 # Config layouts handled:
 #   A. plaintext, UTF-16LE strings          (original)
@@ -82,15 +82,17 @@ rule NitroBunnyDownloader
         cape_type = "NitroBunnyDownloader Payload"
         hash = "960e59200ec0a4b5fb3b44e6da763f5fec4092997975140797d4eec491de411b"
         hash2 = "a9be0114857faacd4d5781459b5f8305d07e48c2541f74885a9f194cfcb20456"
+        hash3 = "b9158588502001a24bba1b476c356355c21c20fca043a3a95f5d4973d6ba54dc"
     strings:
-        // call ; mov r8d,<size> ; lea rdx,<blob> ; mov rcx,rax ; mov r?,r? ; call
-        $config1 = {E8 [3] 00 41 B8 ?? ?? 00 00 48 8D 15 [3] 00 48 (89 C1 | 8B C8) 4? 89 ?? E8 [3] 00}
-        // call ; lea rdx,<blob> ; mov r8d,<size> ; mov rcx,rax ; mov r?,r? ; call
-        $config2 = {E8 [3] 00 48 8D 15 [3] 00 41 B8 ?? ?? 00 00 48 (89 C1 | 8B C8) 4? 89 ?? E8 [3] 00}
-        // call ; mov rcx,rax ; lea rdx,<blob> ; mov r8d,<size> ; mov r?,r? ; call
-        $config3 = {E8 [3] 00 48 (8B C8 | 89 C1) 48 8D 15 [3] 00 41 B8 ?? ?? 00 00 4? 8B ?? E8 [3] 00}
+        // mov r8d,<size> ; lea rdx,<blob> ; mov rcx,rax
+        $cfg_size_first = { 41 B8 ?? ?? 00 00 48 8D 15 ?? ?? ?? 00 48 (89 | 8B) ?? }
+        // lea rdx,<blob> ; mov r8d,<size> ; mov r?,rax
+        $cfg_lea_first  = { 48 8D 15 ?? ?? ?? 00 41 B8 ?? ?? 00 00 48 (89 | 8B) ?? }
+        // memcpy inlined as a byte loop:
+        // lea r?,<blob> ; mov r?,rax ; sub r?,rax ; mov r8d,<size>
+        $cfg_inline     = { (48 | 4C) 8D (05 | 0D | 15 | 1D | 25 | 2D | 35 | 3D) ?? ?? ?? 00 48 8B ?? (48 | 4C) 2B ?? 41 B8 ?? ?? 00 00 }
     condition:
-        uint16(0) == 0x5A4D and any of ($config*)
+        uint16(0) == 0x5A4D and any of ($cfg*)
 }
 """
 
@@ -98,14 +100,8 @@ yara_rules = yara.compile(source=yara_rule)
 
 RC4_KEY_LEN = 16
 
-CNC_SCHEMAS = {443: "https", 8443: "https"}
-
-# (lea rdx offset, mov r8d imm32 offset) within each fixed 29-byte $config match
-CONFIG_OFFSETS = {
-    "$config1": (11, 7),  # call | 41 B8 <size> | 48 8D 15 <blob> | 48 89 C1  | 4? 89 ?? | call
-    "$config2": (5, 14),  # call | 48 8D 15 <blob> | 41 B8 <size> | 48 89 C1  | 4? 89 ?? | call
-    "$config3": (8, 17),  # call | 48 8B C8 | 48 8D 15 <blob> | 41 B8 <size>  | 4? 8B ?? | call
-}
+# lea r64,[rip+disp32] with any destination register
+LEA_RIP_RE = re.compile(rb"[\x48\x4C]\x8D[\x05\x0D\x15\x1D\x25\x2D\x35\x3D]")
 
 
 def yara_scan(raw_data):
@@ -133,19 +129,20 @@ def rc4(key, data):
 
 
 def _candidates(filebuf):
-    """Yield (config_size, lea_offset) for every match, all three instruction orders."""
+    """Yield (config_size, lea_offset) for every match, all instruction forms."""
     for hit in yara_scan(filebuf):
         if hit.rule != "NitroBunnyDownloader":
             continue
         for item in hit.strings:
-            offsets = CONFIG_OFFSETS.get(item.identifier)
-            if not offsets:
-                continue
-            i_lea, i_sz = offsets
             for inst in item.instances:
                 off = inst.offset
-                size = struct.unpack_from("<I", filebuf, off + i_sz)[0]
-                yield size, off + i_lea
+                blk = filebuf[off:off + len(inst.matched_data)]
+                i_sz = blk.find(b"\x41\xB8")
+                m_lea = LEA_RIP_RE.search(blk)
+                if i_sz < 0 or not m_lea:
+                    continue
+                size = struct.unpack_from("<I", blk, i_sz + 2)[0]
+                yield size, off + m_lea.start()
 
 
 def _read_blob(pe, filebuf, size, lea_off):
@@ -162,31 +159,6 @@ def _read_utf16(data, off, nbytes):
     return data[off:off + nbytes].decode("utf-16le", errors="replace").rstrip("\x00"), off + nbytes
 
 
-def _read_utf16_list(data, off, count):
-    items = []
-    for _ in range(count):
-        ln, off = struct.unpack_from("<Q", data, off)[0], off + 8
-        s, off = _read_utf16(data, off, ln)
-        items.append(s)
-    return items, off
-
-
-def make_endpoints(cncs: list[str], port: int | None, uris: list[str]) -> list[str]:
-    endpoints = []
-    # HTTP is the only protocol this family speaks, so it is the default for an unknown port
-    schema = CNC_SCHEMAS.get(port, "http")
-    for cnc in cncs:
-        base_url = f"{schema}://{cnc}"
-        if port and port not in (80, 443):
-            base_url += f":{port}"
-
-        # with no URIs the host still has to be emitted, as a bare "<schema>://<host>/"
-        for uri in uris or [""]:
-            endpoints.append(f"{base_url}/{uri.lstrip('/')}")
-
-    return endpoints
-
-
 def parse_utf16_schema(data):
     """Original layout: port, n_c2, {qword len + UTF-16LE}, UA, headers, uris."""
     cfg, raw = {}, {}
@@ -194,22 +166,31 @@ def parse_utf16_schema(data):
     port, off = struct.unpack_from("<I", data, off)[0], off + 4
     if port not in (80, 443, 8080, 8443):
         return None
+    cfg["port"] = port
     num, off = struct.unpack_from("<I", data, off)[0], off + 4
     if not 1 <= num <= 16:
         return None
-    cncs, off = _read_utf16_list(data, off, num)
+    cncs = []
+    for _ in range(num):
+        ln, off = struct.unpack_from("<Q", data, off)[0], off + 8
+        s, off = _read_utf16(data, off, ln)
+        cncs.append(s)
+    cfg["CNCs"] = cncs
     ln, off = struct.unpack_from("<Q", data, off)[0], off + 8
-    cfg["user_agent"], off = _read_utf16(data, off, ln)
-    num, off = struct.unpack_from("<I", data, off)[0], off + 4
-    raw["http_header_items"], off = _read_utf16_list(data, off, num)
-    num, off = struct.unpack_from("<I", data, off)[0], off + 4
-    uris, off = _read_utf16_list(data, off, num)
-    # port and the URI list are folded into the endpoints, so neither is kept separately
-    cfg["CNCs"] = make_endpoints(cncs, port, uris)
+    raw["user_agent"], off = _read_utf16(data, off, ln)
+    for label in ("http_header_items", "uri_list"):
+        num, off = struct.unpack_from("<I", data, off)[0], off + 4
+        items = []
+        for _ in range(num):
+            ln, off = struct.unpack_from("<Q", data, off)[0], off + 8
+            s, off = _read_utf16(data, off, ln)
+            items.append(s)
+        raw[label] = items
     # NB: these two are NOT the layout-B sleep/jitter pair - observed values are
     # large and random-looking (e.g. 2261840800), so they are left unnamed.
     raw["unknown_1"], off = struct.unpack_from("<I", data, off)[0], off + 4
     raw["unknown_2"], off = struct.unpack_from("<I", data, off)[0], off + 4
+    cfg["user_agent"] = raw["user_agent"]
     cfg["raw"] = raw
     return cfg
 
@@ -340,14 +321,8 @@ def parse_profile_schema(data):
                     out.append(v)
         return out
 
-    # built per profile: hosts, port and URIs only pair up within the same profile
-    endpoints = []
-    for p in profiles:
-        for endpoint in make_endpoints(p["hosts"], p["port"], p["uris"]):
-            if endpoint not in endpoints:
-                endpoints.append(endpoint)
-
-    cfg = {"CNCs": endpoints}
+    cfg = {"CNCs": flat("hosts")}
+    cfg["port"] = profiles[0]["port"]
     uas = flat("user_agents")
     cfg["user_agent"] = uas[0] if uas else None
     cfg["sleep"] = sleep_base
@@ -359,8 +334,9 @@ def parse_profile_schema(data):
         "sleep_ms": sleep_base * SLEEP_SCALE,
         "profile_count": nprof,
         "profiles": profiles,
-        # flattened views; the URI list is omitted, it is folded into the endpoints
+        # flattened views, kept for compatibility with the layout-A output
         "user_agents": uas,
+        "uri_list": flat("uris"),
         "http_header_items": flat("headers"),
         "token_carriers": flat("token_carriers"),
         "field_names": flat("field_names"),
@@ -406,11 +382,10 @@ def parse_ascii_schema(data):
 
     if not cncs:
         return None
+    cfg["CNCs"] = cncs
     ports = [v for _, v in fields if v in (80, 443, 8080, 8443)]
-    port = ports[0] if ports else None
-    cfg["CNCs"] = make_endpoints(cncs, port, uris)
+    cfg["port"] = ports[0] if ports else None
     cfg["user_agent"] = uas[0] if uas else None
-    raw["port"] = port
     raw["user_agents"] = uas
     raw["uri_list"] = uris
     raw["http_header_items"] = headers
