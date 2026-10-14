@@ -20,10 +20,10 @@
 #   1. a "mov ecx, imm32" immediately before the allocator call (absent in some builds)
 #   2. "mov r8d, <size>" appearing BEFORE "lea rdx, <blob>" (the two are swapped in others)
 #   3. "mov rcx, rax" encoded as 48 89 C1 (Clang); MSVC builds emit 48 8B C8
-# $config1-3 below each pin one observed ordering of the size/lea/mov trio,
-# bracketed by the surrounding calls. Every pattern is a fixed 29 bytes, so the
-# size and lea positions come from CONFIG_OFFSETS instead of being searched for,
-# and Python validates the blob structurally afterwards.
+#   4. the memcpy call itself: b9158588... inlines it as a byte loop, loading the
+#      blob via "lea r9" (4C 8D 0D) instead of "lea rdx"
+# The rule below anchors only on the size/lea pair in either order, and Python
+# validates structurally afterwards.
 #
 # Config layouts handled:
 #   A. plaintext, UTF-16LE strings          (original)
@@ -82,15 +82,17 @@ rule NitroBunnyDownloader
         cape_type = "NitroBunnyDownloader Payload"
         hash = "960e59200ec0a4b5fb3b44e6da763f5fec4092997975140797d4eec491de411b"
         hash2 = "a9be0114857faacd4d5781459b5f8305d07e48c2541f74885a9f194cfcb20456"
+        hash3 = "b9158588502001a24bba1b476c356355c21c20fca043a3a95f5d4973d6ba54dc"
     strings:
-        // call ; mov r8d,<size> ; lea rdx,<blob> ; mov rcx,rax ; mov r?,r? ; call
-        $config1 = {E8 [3] 00 41 B8 ?? ?? 00 00 48 8D 15 [3] 00 48 (89 C1 | 8B C8) 4? 89 ?? E8 [3] 00}
-        // call ; lea rdx,<blob> ; mov r8d,<size> ; mov rcx,rax ; mov r?,r? ; call
-        $config2 = {E8 [3] 00 48 8D 15 [3] 00 41 B8 ?? ?? 00 00 48 (89 C1 | 8B C8) 4? 89 ?? E8 [3] 00}
-        // call ; mov rcx,rax ; lea rdx,<blob> ; mov r8d,<size> ; mov r?,r? ; call
-        $config3 = {E8 [3] 00 48 (8B C8 | 89 C1) 48 8D 15 [3] 00 41 B8 ?? ?? 00 00 4? 8B ?? E8 [3] 00}
+        // mov r8d,<size> ; lea rdx,<blob> ; mov rcx,rax
+        $cfg_size_first = { 41 B8 ?? ?? 00 00 48 8D 15 ?? ?? ?? 00 48 (89 | 8B) ?? }
+        // lea rdx,<blob> ; mov r8d,<size> ; mov r?,rax
+        $cfg_lea_first  = { 48 8D 15 ?? ?? ?? 00 41 B8 ?? ?? 00 00 48 (89 | 8B) ?? }
+        // memcpy inlined as a byte loop:
+        // lea r?,<blob> ; mov r?,rax ; sub r?,rax ; mov r8d,<size>
+        $cfg_inline     = { (48 | 4C) 8D (05 | 0D | 15 | 1D | 25 | 2D | 35 | 3D) ?? ?? ?? 00 48 8B ?? (48 | 4C) 2B ?? 41 B8 ?? ?? 00 00 }
     condition:
-        uint16(0) == 0x5A4D and any of ($config*)
+        uint16(0) == 0x5A4D and any of ($cfg*)
 }
 """
 
@@ -100,12 +102,8 @@ RC4_KEY_LEN = 16
 
 CNC_SCHEMAS = {443: "https", 8443: "https"}
 
-# (lea rdx offset, mov r8d imm32 offset) within each fixed 29-byte $config match
-CONFIG_OFFSETS = {
-    "$config1": (11, 7),  # call | 41 B8 <size> | 48 8D 15 <blob> | 48 89 C1  | 4? 89 ?? | call
-    "$config2": (5, 14),  # call | 48 8D 15 <blob> | 41 B8 <size> | 48 89 C1  | 4? 89 ?? | call
-    "$config3": (8, 17),  # call | 48 8B C8 | 48 8D 15 <blob> | 41 B8 <size>  | 4? 8B ?? | call
-}
+# lea r64,[rip+disp32] with any destination register
+LEA_RIP_RE = re.compile(rb"[\x48\x4C]\x8D[\x05\x0D\x15\x1D\x25\x2D\x35\x3D]")
 
 
 def yara_scan(raw_data):
@@ -133,19 +131,20 @@ def rc4(key, data):
 
 
 def _candidates(filebuf):
-    """Yield (config_size, lea_offset) for every match, all three instruction orders."""
+    """Yield (config_size, lea_offset) for every match, all instruction forms."""
     for hit in yara_scan(filebuf):
         if hit.rule != "NitroBunnyDownloader":
             continue
         for item in hit.strings:
-            offsets = CONFIG_OFFSETS.get(item.identifier)
-            if not offsets:
-                continue
-            i_lea, i_sz = offsets
             for inst in item.instances:
                 off = inst.offset
-                size = struct.unpack_from("<I", filebuf, off + i_sz)[0]
-                yield size, off + i_lea
+                blk = filebuf[off:off + len(inst.matched_data)]
+                i_sz = blk.find(b"\x41\xB8")
+                m_lea = LEA_RIP_RE.search(blk)
+                if i_sz < 0 or not m_lea:
+                    continue
+                size = struct.unpack_from("<I", blk, i_sz + 2)[0]
+                yield size, off + m_lea.start()
 
 
 def _read_blob(pe, filebuf, size, lea_off):

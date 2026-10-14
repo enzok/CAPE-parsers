@@ -2,13 +2,13 @@ import hashlib
 import os
 import pytest
 
-from cape_parsers.CAPE.core.AxolotlLoader import extract_config
+from cape_parsers.CAPE.core.AxolotLoader import extract_config
 
 SAMPLE_PATH = "tests/data/malware/906035b6092b2ce1290c566f590e88f1b960b25c6d987f46a3d99cca5b05ee9d"
 
 
 @pytest.mark.skipif(not os.path.exists(SAMPLE_PATH), reason="Missed file")
-def test_axolotlloader_906035b6092b2ce1290c566f590e88f1b960b25c6d987f46a3d99cca5b05ee9d():
+def test_axolotloader():
     with open(SAMPLE_PATH, "rb") as data:
         conf = extract_config(data.read())
         conf["dump_files"]["payload"] = hashlib.sha256(conf["dump_files"]["payload"]).hexdigest()
