@@ -18,7 +18,7 @@ import struct
 
 import pefile
 
-DESCRIPTION = "AxolotlLoader payload dumper."
+DESCRIPTION = "AxolotLoader payload dumper."
 AUTHOR = "enzok"
 
 log = logging.getLogger(__name__)
